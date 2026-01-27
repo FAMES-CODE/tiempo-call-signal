@@ -1,3 +1,4 @@
+import { ModeToggle } from '../mode-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { SidebarTrigger } from '../ui/sidebar';
 
@@ -10,6 +11,7 @@ function AppTopbar() {
         <Avatar>
           <AvatarFallback>JD</AvatarFallback>
         </Avatar>
+        <ModeToggle />
       </div>
     </div>
   );

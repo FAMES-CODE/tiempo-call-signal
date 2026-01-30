@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id                 Int         @id @default(autoincrement())
+  username           String      @unique
+  password           String
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  callSheets         CallSheet[] @relation("CreatedBy")
+  resolvedCallSheets CallSheet[] @relation("ResolvedBy")
+}
+
+model Customer {
+  id                    Int         @id @default(autoincrement())
+  RECORDID              Int
+  CODE_CLIENT           String
+  CLIENT                String
+  ACTIVITE              String?
+  CODE_POSTAL           String?
+  ADRESSE               String?
+  COMMUNE               String?
+  WILAYA                String?
+  CONTACT               String?
+  TEL                   String?
+  FAX                   String?
+  NUM_RC                String?
+  NUM_IF                String?
+  NUM_IS                String?
+  NUM_ART               String?
+  NIN                   String?
+  COMPTE                String?
+  RIB                   String?
+  EMAIL                 String?
+  SITE_WEB              String?
+  SOLDE_INI             Float       @default(0)
+  ACHATS                Float       @default(0)
+  VERSER                Float       @default(0)
+  CREDIT_LIMIT          Float?
+  NOTES                 String?
+  FAMILLE               String?
+  SOUS_FAMILLE          String?
+  NBR_BON               Int?
+  SOLDE                 Float       @default(0)
+  MODE_TARIF            String?
+  TYPE_FID              String?
+  NUM_CF                String?
+  ALLOW_CREDIT          Int?
+  DATE_PASSAGE          DateTime?
+  VIS_ADMIN             Int?
+  CODE_FRS              String?
+  CODE_DEPOT            String?
+  LATITUDE              Float?
+  LONGITUDE             Float?
+  CODE_VENDEUR          String?
+  SUP                   Int?
+  DATE_DER_MODIFICATION DateTime?
+  UTILISATEUR           String?
+  NOM_ORD               String?
+  JRNL                  Int?
+  callSheets            CallSheet[]
+}
+
+model CallSheet {
+  id                 Int       @id @default(autoincrement())
+  status             String    @default("pending")
+  problemType        String?
+  problemDescription String?
+  callSim            String?
+  callNumber         String?
+  user               User      @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById        Int
+  date               DateTime
+  customer           Customer  @relation(fields: [customerId], references: [id])
+  customerId         Int
+  observation        String?
+  resolvedAt         DateTime?
+  resolvedBy         User?     @relation("ResolvedBy", fields: [resolvedById], references: [id])
+  resolvedById       Int?
+  isSynced           Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}

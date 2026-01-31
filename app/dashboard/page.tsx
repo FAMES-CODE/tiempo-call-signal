@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 
 function Page() {
   return (
-    <div className="grid grid-cols-2 p-4 gap-8">
+    <div className="grid grid-cols-2  gap-8">
       <SummaryCard />
 
       <StatisticsCard />

@@ -3,26 +3,30 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useForm, SubmitHandler } from "react-hook-form";
-import loginT from "@/types/LoginT";
-
+import { LoginSchema } from "@/lib/schemas/authSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
-   const {
-     register,
-     handleSubmit,
-     watch,
-     formState: { errors },
-   } = useForm<loginT>();
-   const onSubmit: SubmitHandler<loginT> = (data) => console.log(data);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<LoginSchema>({
+    resolver: zodResolver(LoginSchema),
+  });
+  const onSubmit: SubmitHandler<LoginSchema> = (data) => console.log(data);
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props} onSubmit={handleSubmit(onSubmit)}>
+    <form
+      className={cn("flex flex-col gap-6", className)}
+      {...props}
+      onSubmit={handleSubmit(onSubmit)}
+    >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Login to your account</h1>
@@ -32,7 +36,13 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
         </div>
         <Field>
           <FieldLabel htmlFor="username">Username</FieldLabel>
-          <Input id="username" type="text" placeholder="your-username" {...register("username")} required />
+          <Input
+            id="username"
+            type="text"
+            placeholder="your-username"
+            {...register("username")}
+            required
+          />
         </Field>
         <Field>
           <div className="flex items-center">
@@ -44,7 +54,13 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
               Forgot your password?
             </a>
           </div>
-          <Input id="password" type="password" placeholder="your-password" {...register("password")} required />
+          <Input
+            id="password"
+            type="password"
+            placeholder="your-password"
+            {...register("password")}
+            required
+          />
         </Field>
         <Field>
           <Button type="submit">Login</Button>

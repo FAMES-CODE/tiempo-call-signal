@@ -12,7 +12,7 @@ export default function DashboardLayout({
       <AppSidebar />
       <main className="flex-1 flex flex-col min-h-screen">
         <AppTopbar />
-        <div>{children}</div>
+        <div className="p-4">{children}</div>
       </main>
     </SidebarProvider>
   );

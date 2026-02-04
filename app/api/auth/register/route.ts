@@ -16,7 +16,10 @@ export async function POST(request: Request) {
       where: { username: data.username },
     });
     if (existingUser) {
-      return new Response("Username already taken", { status: 400 });
+      return new Response(JSON.stringify({ message: "User already exists" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const user = await prisma.user.create({

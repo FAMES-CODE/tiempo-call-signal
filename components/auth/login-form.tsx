@@ -1,17 +1,18 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { LoginSchema } from "@/lib/schemas/authSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ToastContainer, toast } from "react-toastify";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -20,7 +21,48 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
   } = useForm<LoginSchema>({
     resolver: zodResolver(LoginSchema),
   });
-  const onSubmit: SubmitHandler<LoginSchema> = (data) => console.log(data);
+
+  const notify = (message: string, type: "success" | "error" | "info") => {
+    toast[type](message);
+  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const onSubmit: SubmitHandler<LoginSchema> = async (data) => {
+    const { username, password } = data;
+    if (!username || !password) {
+      notify("Please fill in all required fields.", "error");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await signIn("credentials", {
+        username,
+        password,
+        redirect: false,
+      });
+
+      console.log("Sign in response:", response);
+
+      if (response?.error) {
+        notify(response.error || "Login failed. Please try again.", "error");
+        setIsSubmitting(false);
+      } else if (response?.ok) {
+        notify("Login successful!", "success");
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1500);
+      } else {
+        notify("Login failed. Please try again.", "error");
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      notify("An error occurred during login. Please try again.", "error");
+      setIsSubmitting(false);
+    }
+  };
   return (
     <form
       className={cn("flex flex-col gap-6", className)}
@@ -63,7 +105,9 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
           />
         </Field>
         <Field>
-          <Button type="submit">Login</Button>
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? "Logging in..." : "Login"}
+          </Button>
         </Field>
       </FieldGroup>
     </form>

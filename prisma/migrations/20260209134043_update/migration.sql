@@ -1,0 +1,85 @@
+-- CreateTable
+CREATE TABLE "User" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "username" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'user',
+    "mustChangePassword" BOOLEAN NOT NULL DEFAULT false
+);
+
+-- CreateTable
+CREATE TABLE "Customer" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "RECORDID" INTEGER NOT NULL,
+    "CODE_CLIENT" TEXT NOT NULL,
+    "CLIENT" TEXT NOT NULL,
+    "ACTIVITE" TEXT,
+    "CODE_POSTAL" TEXT,
+    "ADRESSE" TEXT,
+    "COMMUNE" TEXT,
+    "WILAYA" TEXT,
+    "CONTACT" TEXT,
+    "TEL" TEXT,
+    "FAX" TEXT,
+    "NUM_RC" TEXT,
+    "NUM_IF" TEXT,
+    "NUM_IS" TEXT,
+    "NUM_ART" TEXT,
+    "NIN" TEXT,
+    "COMPTE" TEXT,
+    "RIB" TEXT,
+    "EMAIL" TEXT,
+    "SITE_WEB" TEXT,
+    "SOLDE_INI" REAL NOT NULL DEFAULT 0,
+    "ACHATS" REAL NOT NULL DEFAULT 0,
+    "VERSER" REAL NOT NULL DEFAULT 0,
+    "CREDIT_LIMIT" REAL,
+    "NOTES" TEXT,
+    "FAMILLE" TEXT,
+    "SOUS_FAMILLE" TEXT,
+    "NBR_BON" INTEGER,
+    "SOLDE" REAL NOT NULL DEFAULT 0,
+    "MODE_TARIF" TEXT,
+    "TYPE_FID" TEXT,
+    "NUM_CF" TEXT,
+    "ALLOW_CREDIT" INTEGER,
+    "DATE_PASSAGE" DATETIME,
+    "VIS_ADMIN" INTEGER,
+    "CODE_FRS" TEXT,
+    "CODE_DEPOT" TEXT,
+    "LATITUDE" REAL,
+    "LONGITUDE" REAL,
+    "CODE_VENDEUR" TEXT,
+    "SUP" INTEGER,
+    "DATE_DER_MODIFICATION" DATETIME,
+    "UTILISATEUR" TEXT,
+    "NOM_ORD" TEXT,
+    "JRNL" INTEGER
+);
+
+-- CreateTable
+CREATE TABLE "CallSheet" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "problemType" TEXT,
+    "problemDescription" TEXT,
+    "callSim" TEXT,
+    "callNumber" TEXT,
+    "createdById" INTEGER NOT NULL,
+    "date" DATETIME NOT NULL,
+    "customerId" INTEGER NOT NULL,
+    "observation" TEXT,
+    "resolvedAt" DATETIME,
+    "resolvedById" INTEGER,
+    "isSynced" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "CallSheet_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "CallSheet_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "CallSheet_resolvedById_fkey" FOREIGN KEY ("resolvedById") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_username_key" ON "User"("username");

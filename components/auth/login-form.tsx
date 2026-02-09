@@ -46,7 +46,13 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
       console.log("Sign in response:", response);
 
       if (response?.error) {
-        notify(response.error || "Login failed. Please try again.", "error");
+        notify(
+          response.error === "CredentialsSignin"
+            ? "Invalid username or password"
+            : response.error || "Login failed. Please try again.",
+          "error",
+        );
+
         setIsSubmitting(false);
       } else if (response?.ok) {
         notify("Login successful!", "success");
@@ -69,6 +75,7 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
       {...props}
       onSubmit={handleSubmit(onSubmit)}
     >
+      <ToastContainer />
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Login to your account</h1>

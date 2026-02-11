@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Calendar } from 'lucide-react';
 import React from 'react'
+import NewformSheet from './new-form-sheet';
 
 function SummaryCard() {
   return (
@@ -13,9 +14,7 @@ function SummaryCard() {
             {new Date(Date.now() - 1000 * 60 * Number()).toLocaleString()}
           </p>
         </div>
-        <Button variant="default" className="w-12 h-12 ">
-          +
-        </Button>
+       <NewformSheet />
       </div>
       <div className="p-4">
         <div className="flex items-center justify-between text-lg font-semibold">

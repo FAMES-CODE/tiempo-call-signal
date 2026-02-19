@@ -59,11 +59,10 @@ export const authOptions = {
         if (!authResult) {
           console.log("Authentication failed");
           return null;
-        };
-        console.log(authResult);
+        }
         return {
           id: String(authResult.user.id),
-          name: authResult.user.username,
+          username: authResult.user.username,
           role: "user",
         };
       },
@@ -86,16 +85,20 @@ export const authOptions = {
     async jwt({ token, user }: { token: JWT; user?: any }) {
       if (user) {
         token.id = user.id;
+        token.name = user.username;
         token.role = user.role;
       }
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        (session.user as any).role = token.role as string;
-      }
-      return session;
+      return {
+        ...session,
+        user: {
+          id: token.id as string,
+          username: token.username as string,
+          role: token.role as string,
+        },
+      };
     },
   },
 } as const satisfies AuthOptions;

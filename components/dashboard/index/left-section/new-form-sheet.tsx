@@ -1,3 +1,4 @@
+import createFormSheet from "@/app/actions/form-sheet";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,13 +31,9 @@ function NewformSheet() {
     control,
     formState: { errors },
   } = useForm<FormSheetT>();
-  const onSubmit: SubmitHandler<FormSheetT> = (data) => {
-    // status, createdById
-    console.log({
-      ...data,
-      status: "open",
-      createdById: session.data?.user?.id ?? 0,
-    });
+
+  const onSubmit: SubmitHandler<FormSheetT> = async (data) => {
+    await createFormSheet(data);
   };
 
   return (
@@ -50,7 +47,7 @@ function NewformSheet() {
           <DialogDescription>
             Fill in the form to create a new case.
           </DialogDescription>
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
             <Input
               {...register("problemType")}
               placeholder="Problem type"
@@ -90,17 +87,19 @@ function NewformSheet() {
               control={control}
               name="customerId"
               render={({ field }) => (
-            <Select onValueChange={field.onChange}>
-              <SelectTrigger className="w-full mb-4">
-                <SelectValue placeholder="Select customer" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="1">John Doe</SelectItem>
-                  <SelectItem value="2">Jane Doe</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+                <Select
+                  onValueChange={(value) => field.onChange(Number(value))}
+                >
+                  <SelectTrigger className="w-full mb-4">
+                    <SelectValue placeholder="Select customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="1">John Doe</SelectItem>
+                      <SelectItem value="2">Jane Doe</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               )}
             />
             <Textarea

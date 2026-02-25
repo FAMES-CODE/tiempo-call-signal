@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCustomers } from "@/lib/firebird-db/sync-customers";
+import { getCustomers } from "@/lib/firebird-db/customers-actions";
 
 export async function GET() {
   try {

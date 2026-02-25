@@ -15,9 +15,7 @@ async function main() {
   const handle = app.getRequestHandler();
 
   app.prepare().then(async () => {
-    cron.schedule("*/5 * * * * *", async () => {
-      await checkAdmin();
-    });
+    await checkAdmin();
 
     createServer((req, res) => {
       const parsedUrl = parse(req.url!, true);

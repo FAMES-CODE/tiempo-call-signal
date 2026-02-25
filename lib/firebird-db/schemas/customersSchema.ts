@@ -42,7 +42,7 @@ export const customersSchema = zod.object({
   longitude: zod.coerce.number().nonnegative(),
   code_vendeur: zod.string().max(20, "CODE_VENDEUR must be at most 20 characters long").nullable().optional(),
   sup: zod.coerce.number().int().nonnegative(),
-  date_er_modification: zod.coerce.date().optional(),
+  date_der_modification: zod.coerce.date().optional(),
   utilisateur: zod.string().max(25, "UTILISATEUR must be at most 25 characters long"),
   nom_ord: zod.string().max(25, "NOM_ORD must be at most 25 characters long"),
   jrnl: zod.coerce.number().int().nonnegative(),

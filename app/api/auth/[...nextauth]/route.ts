@@ -85,8 +85,19 @@ export const authOptions = {
     async jwt({ token, user }: { token: JWT; user?: any }) {
       if (user) {
         token.id = user.id;
-        token.name = user.username;
         token.role = user.role;
+
+        // Fetch full user data from DB
+        const dbUser = await prisma.user.findUnique({
+          where: { id: Number(user.id) },
+          omit: { password: true },
+        });
+
+        if (dbUser) {
+          token.username = dbUser.username;
+          token.role = dbUser.role;
+          // add any other fields you need
+        }
       }
       return token;
     },

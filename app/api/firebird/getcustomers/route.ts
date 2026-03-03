@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getCustomers } from "@/lib/firebird-db/customers-actions";
+import { getCustomersFromFirebird } from "@/lib/firebird-db/customers-actions";
 
 export async function GET() {
   try {
-    const customers = await getCustomers();
+    const customers = await getCustomersFromFirebird();
     return NextResponse.json(customers);
   } catch (error) {
     console.error("Error fetching customers:", error);

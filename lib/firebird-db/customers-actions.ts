@@ -2,7 +2,7 @@ import { firebirdQuery } from "@/app/firebird-db";
 import { customersSchema, CustomerT } from "./schemas/customersSchema";
 import prisma from "@/app/db";
 
-export async function getCustomers(): Promise<CustomerT[]> {
+export async function getCustomersFromFirebird(): Promise<CustomerT[]> {
   const customers = await firebirdQuery("SELECT * FROM CLIENTS");
   if (!Array.isArray(customers)) {
     throw new Error("Expected an array of customers");
@@ -82,7 +82,7 @@ function mapCustomerToPayload(customer: CustomerT) {
 }
 
 export async function syncCustomers(): Promise<void> {
-  const customers = await getCustomers();
+  const customers = await getCustomersFromFirebird();
 
   for (const customer of customers) {
     const payload = mapCustomerToPayload(customer);

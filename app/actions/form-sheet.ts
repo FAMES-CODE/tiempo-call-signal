@@ -11,7 +11,6 @@ export default async function createFormSheet(data: FormSheetT) {
   try {
     await prisma.callSheet.create({
       data: {
-        date: new Date(),
         status: data.status,
         problemType: data.problemType,
         problemDescription: data.problemDescription,

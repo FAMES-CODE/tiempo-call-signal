@@ -21,10 +21,31 @@ import { Textarea } from "@/components/ui/textarea";
 import { FormSheetT } from "@/lib/schemas/formsheetSchema";
 import { Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { useForm, SubmitHandler, Controller } from "react-hook-form";
 
 function NewformSheet() {
   const session = useSession();
+  const [customers, setCustomers] = useState<{ id: number; CLIENT: string }[]>(
+    [],
+  );
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const res = await fetch(
+          process.env.NEXT_PUBLIC_API_BASE_URL + "/api/customers",
+        );
+        const data = await res.json();
+        console.log(res)
+        setCustomers(data);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+    fetchCustomers();
+  }, []);
+
   const {
     register,
     handleSubmit,
@@ -90,18 +111,22 @@ function NewformSheet() {
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                 >
-                  <SelectTrigger className="w-full mb-4">
+                  <SelectTrigger>
                     <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="1">John Doe</SelectItem>
-                      <SelectItem value="2">Jane Doe</SelectItem>
+                      {customers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          {customer.CLIENT}
+                        </SelectItem>
+                      ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               )}
             />
+
             <Textarea
               {...register("observation")}
               placeholder="Observation"

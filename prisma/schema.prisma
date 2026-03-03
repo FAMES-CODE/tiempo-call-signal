@@ -24,7 +24,7 @@ model User {
 
 model Customer {
   id                    Int         @id @default(autoincrement())
-  RECORDID              Int
+  RECORDID              Int         @unique
   CODE_CLIENT           String
   CLIENT                String
   ACTIVITE              String?

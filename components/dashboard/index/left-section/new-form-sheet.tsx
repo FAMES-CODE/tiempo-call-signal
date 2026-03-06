@@ -37,7 +37,6 @@ function NewformSheet() {
           process.env.NEXT_PUBLIC_API_BASE_URL + "/api/customers",
         );
         const data = await res.json();
-        console.log(res)
         setCustomers(data);
       } catch (error) {
         console.error("Error fetching customers:", error);
@@ -79,18 +78,18 @@ function NewformSheet() {
               placeholder="Problem description"
               className="w-full p-2 border rounded mb-4"
             />
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4">
               <Controller
                 control={control}
                 name="callSim"
                 render={({ field }) => (
                   <Select onValueChange={field.onChange}>
-                    <SelectTrigger className="col-span-1">
-                      <SelectValue placeholder="Select call sim" />
+                    <SelectTrigger className="">
+                      <SelectValue placeholder="SIM" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="403">403</SelectItem>
+                        <SelectItem value="905">905</SelectItem>
                         <SelectItem value="503">503</SelectItem>
                         <SelectItem value="903">903</SelectItem>
                       </SelectGroup>
@@ -101,7 +100,7 @@ function NewformSheet() {
               <Input
                 {...register("callNumber")}
                 placeholder="Call number"
-                className="w-full col-span-2 ml-2 p-2 border rounded mb-4"
+                className="w-full col-span-3 p-2 border rounded mb-4"
               />
             </div>
             <Controller
@@ -111,14 +110,14 @@ function NewformSheet() {
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       {customers.map((customer) => (
                         <SelectItem key={customer.id} value={customer.id}>
-                          {customer.CLIENT}
+                          {customer.id} - {customer.CLIENT}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -130,7 +129,7 @@ function NewformSheet() {
             <Textarea
               {...register("observation")}
               placeholder="Observation"
-              className="w-full p-2 border rounded mb-4"
+              className="w-full p-2 border rounded my-4"
             />
             <Button type="submit">Submit</Button>
           </form>

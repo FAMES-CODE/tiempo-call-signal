@@ -1,9 +1,26 @@
-import { Button } from '@/components/ui/button';
-import { Calendar } from 'lucide-react';
-import React from 'react'
-import NewformSheet from './new-form-sheet';
+"use client";
+import { Calendar } from "lucide-react";
+import React, { useEffect } from "react";
+import NewformSheet from "./new-form-sheet";
+import { Badge } from "@/components/ui/badge";
 
 function SummaryCard() {
+  const [cases, setCases] = React.useState([]);
+  const fetchCases = async () => {
+    const res = await fetch(
+      process.env.NEXT_PUBLIC_API_BASE_URL + "/api/sheets",
+    );
+    const data = await res.json();
+    setCases(data);
+  };
+  useEffect(() => {
+    try {
+      fetchCases();
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+  console.log(cases);
   return (
     <div className="flex flex-col w-full gap-4 bg-sidebar rounded-xl">
       <div className="flex items-center justify-between p-4">
@@ -14,7 +31,7 @@ function SummaryCard() {
             {new Date(Date.now() - 1000 * 60 * Number()).toLocaleString()}
           </p>
         </div>
-       <NewformSheet />
+        <NewformSheet />
       </div>
       <div className="p-4">
         <div className="flex items-center justify-between text-lg font-semibold">
@@ -25,42 +42,35 @@ function SummaryCard() {
           />
         </div>
         <div>
-          <div className=" rounded-lg p-4 bg-primary-foreground mt-4">
-            <div className="flex items-center gap-4 ">
-              <h1>John Doe</h1>
-              <p className="text-sm text-muted-foreground">
-                {" "}
-                Resolved 2 hours ago
-              </p>
-            </div>
-            <h2 className="text-sm text-muted-foreground">
-              Call reason : Technical issue
-            </h2>
-          </div>
-          <div className=" rounded-lg p-4 bg-primary-foreground mt-4">
-            <div className="flex items-center gap-4 ">
-              <h1>John Doe</h1>
-              <p className="text-sm text-muted-foreground">
-                {" "}
-                Resolved 2 hours ago
-              </p>
-            </div>
-            <h2 className="text-sm text-muted-foreground">
-              Call reason : Technical issue
-            </h2>
-          </div>
-          <div className=" rounded-lg p-4 bg-primary-foreground mt-4">
-            <div className="flex items-center gap-4 ">
-              <h1>John Doe</h1>
-              <p className="text-sm text-muted-foreground">
-                {" "}
-                Resolved 2 hours ago
-              </p>
-            </div>
-            <h2 className="text-sm text-muted-foreground">
-              Call reason : Technical issue
-            </h2>
-          </div>
+          {cases.map((c: any) => {
+            if (c.status === "resolved")
+              return (
+                <div className=" rounded-lg p-4 bg-primary-foreground mt-4">
+                  <div className="flex items-center gap-4 ">
+                    <h1>{c.customer.CLIENT}</h1>
+                    <p className="text-sm text-muted-foreground">
+                      {" "}
+                      Resolved{" "}
+                      {Math.floor(
+                        Math.abs(Date.now() - new Date(c.updatedAt).getTime()) / 36e5,
+                      ) / 60}{" "}
+                      hours ago by{" "}
+                      <span className="text-sm text-muted-foreground">
+                        {c.user.username}{" "}
+                      </span>
+                    </p>
+                  </div>
+                  <h2 className="text-sm text-muted-foreground">
+                    Call reason :  {c.problemType}
+                  </h2>
+                </div>
+              );
+          })}
+          {cases.filter((c: any) => c.status === "resolved").length === 0 && (
+            <p className="text-sm text-muted-foreground mt-4">
+              No cases resolved yet
+            </p>
+          )}
         </div>
       </div>
       <div className="p-4 border-t">
@@ -68,21 +78,43 @@ function SummaryCard() {
           <h1 className="text-lg font-semibold">
             Customer waiting for support
           </h1>
-          <p className="text-3xl font-bold mt-2">2</p>
+          <p className="text-3xl font-bold mt-2">
+            {cases.filter((c: any) => c.status === "pending").length}
+          </p>
         </div>
         <div>
-          <div className=" rounded-xl p-4 mt-4 h-24 bg-muted">
-             <h1>Jane Doe - <span className="text-sm text-muted-foreground"> Technical issue</span> - <span className="text-sm text-muted-foreground"> 555 5555 555 </span></h1>
-              <p className="text-sm text-muted-foreground"> Case opened 2 hours ago by <span className="text-sm text-muted-foreground">John Doe</span></p>
-          </div>
-          <div className=" rounded-xl p-4 mt-4 h-24 bg-muted">
-             <h1>Jane Doe - <span className="text-sm text-muted-foreground"> Technical issue</span> - <span className="text-sm text-muted-foreground"> 555 5555 555 </span></h1>
-              <p className="text-sm text-muted-foreground"> Case opened 2 hours ago by <span className="text-sm text-muted-foreground">John Doe</span></p>
-          </div>
+          {cases.map((c: any) => {
+            if (c.status === "pending")
+              return (
+                <div className=" rounded-xl p-4 mt-4 h-24 bg-muted" key={c.id}>
+                  <h1>
+                    {c.customer.CLIENT} -{" "}
+                    <span className="text-sm text-muted-foreground">
+                      {c.problemType}
+                    </span>{" "}
+                    -{" "}
+                    <span className="text-sm text-muted-foreground">
+                      {c.callNumber}
+                    </span>
+                    -{" "}
+                    <Badge className="text-sm" variant="outline">
+                      {c.callSim}
+                    </Badge>
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {" "}
+                    Case opened {c.createdAt.split("T")[0]} ago by{" "}
+                    <span className="text-sm text-muted-foreground">
+                      {c.user.username}{" "}
+                    </span>
+                  </p>
+                </div>
+              );
+          })}
         </div>
       </div>
     </div>
   );
 }
 
-export default SummaryCard
+export default SummaryCard;

@@ -5,7 +5,7 @@ export async function GET(request: Request) {
     include: {
       customer: true,
       user: {
-        select: {username: true},
+        select: {username: true, id: true},
       },
     },
   });

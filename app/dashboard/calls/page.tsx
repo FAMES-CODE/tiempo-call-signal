@@ -32,6 +32,7 @@ function Page() {
           { accessorKey: "callNumber", header: "Customer Number" },
           { accessorKey: "callSim", header: "Called on" },
           { accessorKey: "problemType", header: "Problem Type" },
+          { accessorKey: "observation", header: "Observation" },
           { accessorKey: "user.username", header: "Created by" },
           { accessorKey: "status", header: "Status" },
         ]}

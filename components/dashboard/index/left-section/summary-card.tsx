@@ -20,7 +20,7 @@ function SummaryCard() {
       console.log(error);
     }
   }, []);
-  console.log(cases);
+  
   return (
     <div className="flex flex-col w-full gap-4 bg-sidebar rounded-xl">
       <div className="flex items-center justify-between p-4">

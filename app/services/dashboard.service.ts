@@ -1,30 +1,32 @@
 import prisma from "@/app/db";
 
-let cachedStats: any = null;
-let lastFetch = 0;
+type DashboardStats = {
+  totalCalls: number;
+  totalResolved: number;
+};
 
-export async function getDashboardStats() {
+const cacheByUser = new Map<number, { data: DashboardStats; lastFetch: number }>();
+const CACHE_TTL_MS = 10000;
+
+export async function getDashboardStats(userId: number): Promise<DashboardStats> {
   const now = Date.now();
+  const cached = cacheByUser.get(userId);
 
-  if (cachedStats && now - lastFetch < 10000) {
-    return cachedStats;
+  if (cached && now - cached.lastFetch < CACHE_TTL_MS) {
+    return cached.data;
   }
 
-  const calls = await prisma.callSheet.groupBy({
-    by: ["createdById"],
-    _count: { id: true },
+  const totalCalls = await prisma.callSheet.count({
+    where: { createdById: userId },
   });
 
-  const resolved = await prisma.callSheet.groupBy({
-    by: ["resolvedById"],
-    where: { status: "resolved" },
-    _count: { id: true },
+  const totalResolved = await prisma.callSheet.count({
+    where: { resolvedById: userId, status: "resolved" },
   });
 
-  const data = { calls, resolved };
+  const data = { totalCalls, totalResolved };
 
-  cachedStats = data;
-  lastFetch = now;
+  cacheByUser.set(userId, { data, lastFetch: now });
 
   return data;
 }

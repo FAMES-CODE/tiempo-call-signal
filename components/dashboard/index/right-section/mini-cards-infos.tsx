@@ -4,9 +4,14 @@ import { Separator } from '@/components/ui/separator';
 import { PhoneIcon } from 'lucide-react';
 import useSWR from "swr";
 
+type StatsResponse = {
+  totalCalls: number;
+  totalResolved: number;
+};
+
 function MiniCards() {
   const fetcher = (url: string) => fetch(url).then(res => res.json());
-  const { data, error } = useSWR(
+  const { data, error } = useSWR<StatsResponse>(
     process.env.NEXT_PUBLIC_API_BASE_URL + "/api/stats",
     fetcher,
     {
@@ -15,8 +20,8 @@ function MiniCards() {
   );
   if (error) console.error(error);
 
-  const totalCalls = data ? data.calls.reduce((sum: number, c: any) => sum + c._count.id, 0) : 0;
-  const totalResolved = data ? data.resolved.reduce((sum: number, r: any) => sum + r._count.id, 0) : 0;
+  const totalCalls = data?.totalCalls ?? 0;
+  const totalResolved = data?.totalResolved ?? 0;
 
   return (
     <div className="grid grid-cols-2 gap-4 mb-4">

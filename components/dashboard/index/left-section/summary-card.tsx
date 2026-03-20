@@ -4,13 +4,30 @@ import React, { useEffect } from "react";
 import NewformSheet from "./new-form-sheet";
 import { Badge } from "@/components/ui/badge";
 
+type CaseItem = {
+  id: number;
+  status: string;
+  updatedAt: string;
+  createdAt: string;
+  problemType: string;
+  callNumber: string;
+  callSim: string;
+  customer: {
+    CLIENT: string;
+  };
+  user: {
+    username: string;
+  };
+};
+
 function SummaryCard() {
-  const [cases, setCases] = React.useState([]);
+  const [cases, setCases] = React.useState<CaseItem[]>([]);
+  const [currentTime, setCurrentTime] = React.useState(() => Date.now());
   const fetchCases = async () => {
     const res = await fetch(
       process.env.NEXT_PUBLIC_API_BASE_URL + "/api/sheets",
     );
-    const data = await res.json();
+    const data: CaseItem[] = await res.json();
     setCases(data);
   };
   useEffect(() => {
@@ -20,7 +37,24 @@ function SummaryCard() {
       console.log(error);
     }
   }, []);
-  
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const resolvedCases = cases.filter((c) => c.status === "resolved");
+  const pendingCases = cases.filter((c) => c.status === "pending");
+  const latestResolvedCase = resolvedCases.reduce<CaseItem | null>((latest, c) => {
+    if (!latest) return c;
+    return new Date(c.updatedAt).getTime() > new Date(latest.updatedAt).getTime()
+      ? c
+      : latest;
+  }, null);
+
+  const getHoursAgo = (isoDate: string) =>
+    Math.max(0, Math.floor((currentTime - new Date(isoDate).getTime()) / 36e5));
+
   return (
     <div className="flex flex-col w-full gap-4 bg-sidebar rounded-xl">
       <div className="flex items-center justify-between p-4">
@@ -28,7 +62,9 @@ function SummaryCard() {
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
             Last case resolved :{" "}
-            {new Date(Date.now() - 1000 * 60 * Number()).toLocaleString()}
+            {latestResolvedCase
+              ? new Date(latestResolvedCase.updatedAt).toLocaleString()
+              : "No resolved case yet"}
           </p>
         </div>
         <NewformSheet />
@@ -42,18 +78,16 @@ function SummaryCard() {
           />
         </div>
         <div>
-          {cases.map((c: any) => {
+          {resolvedCases.map((c) => {
             if (c.status === "resolved")
               return (
-                <div className=" rounded-lg p-4 bg-primary-foreground mt-4">
+                <div className=" rounded-lg p-4 bg-primary-foreground mt-4" key={c.id}>
                   <div className="flex items-center gap-4 ">
                     <h1>{c.customer.CLIENT}</h1>
                     <p className="text-sm text-muted-foreground">
                       {" "}
                       Resolved{" "}
-                      {Math.floor(
-                        Math.abs(Date.now() - new Date(c.updatedAt).getTime()) / 36e5,
-                      ) / 60}{" "}
+                      {getHoursAgo(c.updatedAt)}{" "}
                       hours ago by{" "}
                       <span className="text-sm text-muted-foreground">
                         {c.user.username}{" "}
@@ -66,7 +100,7 @@ function SummaryCard() {
                 </div>
               );
           })}
-          {cases.filter((c: any) => c.status === "resolved").length === 0 && (
+          {resolvedCases.length === 0 && (
             <p className="text-sm text-muted-foreground mt-4">
               No cases resolved yet
             </p>
@@ -79,11 +113,11 @@ function SummaryCard() {
             Customer waiting for support
           </h1>
           <p className="text-3xl font-bold mt-2">
-            {cases.filter((c: any) => c.status === "pending").length}
+            {pendingCases.length}
           </p>
         </div>
         <div>
-          {cases.map((c: any) => {
+          {pendingCases.map((c) => {
             if (c.status === "pending")
               return (
                 <div className=" rounded-xl p-4 mt-4 h-24 bg-muted" key={c.id}>

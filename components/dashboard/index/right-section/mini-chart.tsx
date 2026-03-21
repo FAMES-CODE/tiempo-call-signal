@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Label, Pie, PieChart } from "recharts";
+import useSWR from "swr";
 
 import {
   ChartContainer,
@@ -10,115 +11,137 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 
-export const description = "A donut chart with text";
-
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 287, fill: "var(--color-firefox)" },
-];
-
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  chrome: {
-    label: "Chrome",
+  resolved: {
+    label: "Resolved",
     color: "var(--chart-1)",
   },
-  safari: {
-    label: "Safari",
+  pending: {
+    label: "Pending",
     color: "var(--chart-2)",
-  },
-  firefox: {
-    label: "Firefox",
-    color: "var(--chart-3)",
   },
 } satisfies ChartConfig;
 
+type StatsResponse = {
+  totalCalls: number;
+  totalResolved: number;
+};
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export function MiniChart() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
-  }, []);
+  const { data, error } = useSWR<StatsResponse>(
+    process.env.NEXT_PUBLIC_API_BASE_URL + "/api/stats",
+    fetcher,
+    { refreshInterval: 10000 },
+  );
+
+  if (error) {
+    console.error(error);
+  }
+
+  const totalCalls = data?.totalCalls ?? 0;
+  const totalResolved = data?.totalResolved ?? 0;
+  const pending = Math.max(0, totalCalls - totalResolved);
+
+  const chartData = React.useMemo(
+    () => [
+      {
+        key: "resolved",
+        name: "resolved",
+        value: totalResolved,
+        fill: "var(--color-resolved)",
+      },
+      {
+        key: "pending",
+        name: "pending",
+        value: pending,
+        fill: "var(--color-pending)",
+      },
+    ],
+    [totalResolved, pending],
+  );
+
+  const total = totalResolved + pending;
 
   return (
-    <div className="p-4 border-none border-0">
-      <div className="flex flex-col items-start">
-        <h1 className="text-2xl">Performance over time</h1>
-        <h2>150 calls statistics</h2>
-      </div>
-      <div className="items-center grid grid-cols-2 justify-between gap-4">
-        <div className="items-center pb-0">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 bg-chart-1 rounded-full animate-pulse"></div>
-              <h1 className="text-lg font-semibold">
-                Total case : {totalVisitors.toLocaleString()}
-              </h1>
-            </div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 bg-chart-2 rounded-full animate-pulse"></div>
-              <h1 className="text-lg font-semibold">
-                Total case resolved : {totalVisitors.toLocaleString()}
-              </h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-chart-3 rounded-full animate-pulse"></div>
-              <h1 className="text-lg font-semibold">
-                Performance increase: 24%
-              </h1>
-            </div>
-          </div>
-        </div>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <ul className="flex min-w-0 flex-1 flex-col gap-3 text-sm">
+        <li className="flex items-center gap-3">
+          <span
+            className="size-3 shrink-0 rounded-full"
+            style={{ backgroundColor: "var(--chart-1)" }}
+            aria-hidden
+          />
+          <span className="text-muted-foreground">Cases resolved</span>
+          <span className="ml-auto font-semibold tabular-nums text-foreground">
+            {totalResolved}
+          </span>
+        </li>
+        <li className="flex items-center gap-3">
+          <span
+            className="size-3 shrink-0 rounded-full"
+            style={{ backgroundColor: "var(--chart-2)" }}
+            aria-hidden
+          />
+          <span className="text-muted-foreground">Pending</span>
+          <span className="ml-auto font-semibold tabular-nums text-foreground">
+            {pending}
+          </span>
+        </li>
+      </ul>
 
-        <ChartContainer
-          config={chartConfig}
-          className=" aspect-square max-h-[250px] w-full justify-self-end "
-        >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={chartData}
-              dataKey="visitors"
-              nameKey="browser"
-              innerRadius={60}
-              strokeWidth={5}
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        <tspan
+      <div className="mx-auto w-full max-w-[220px] shrink-0 sm:mx-0">
+        {total === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            No call data yet. Log activity to see your mix here.
+          </p>
+        ) : (
+          <ChartContainer config={chartConfig} className="aspect-square w-full">
+            <PieChart>
+              <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={52}
+                outerRadius={72}
+                strokeWidth={2}
+                stroke="hsl(var(--background))"
+              >
+                <Label
+                  content={({ viewBox }) => {
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
                         >
-                          {totalVisitors.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
-                        >
-                          Visitors
-                        </tspan>
-                      </text>
-                    );
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-2xl font-bold"
+                          >
+                            {total}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) + 20}
+                            className="fill-muted-foreground text-xs"
+                          >
+                            total
+                          </tspan>
+                        </text>
+                      );
+                    }
+                  }}
+                />
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        )}
       </div>
     </div>
   );

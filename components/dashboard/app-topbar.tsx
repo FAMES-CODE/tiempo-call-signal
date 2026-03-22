@@ -76,7 +76,7 @@ function AppTopbar() {
 
         <Separator
           orientation="vertical"
-          className="mr-1 hidden h-6 md:block"
+          className="mr-1 hidden  md:block"
         />
 
         <nav

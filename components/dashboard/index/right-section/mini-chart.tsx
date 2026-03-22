@@ -14,11 +14,11 @@ import {
 const chartConfig = {
   resolved: {
     label: "Resolved",
-    color: "var(--chart-1)",
+    color: "var(--chart-2)",
   },
   pending: {
     label: "Pending",
-    color: "var(--chart-2)",
+    color: "var(--color-destructive)",
   },
 } satisfies ChartConfig;
 
@@ -50,13 +50,13 @@ export function MiniChart() {
         key: "resolved",
         name: "resolved",
         value: totalResolved,
-        fill: "var(--color-resolved)",
+        fill: "var(--color-chart-2)",
       },
       {
         key: "pending",
         name: "pending",
         value: pending,
-        fill: "var(--color-pending)",
+        fill: "var(--color-destructive)",
       },
     ],
     [totalResolved, pending],
@@ -81,7 +81,7 @@ export function MiniChart() {
         <li className="flex items-center gap-3">
           <span
             className="size-3 shrink-0 rounded-full"
-            style={{ backgroundColor: "var(--chart-2)" }}
+            style={{ backgroundColor: "var(--color-destructive)" }}
             aria-hidden
           />
           <span className="text-muted-foreground">Pending</span>

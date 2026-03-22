@@ -52,12 +52,15 @@ function Page() {
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [query, setQuery] = React.useState("");
-  const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] =
+    React.useState<Customer | null>(null);
 
   const fetchCustomers = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + "/api/customers");
+      const res = await fetch(
+        process.env.NEXT_PUBLIC_API_BASE_URL + "/api/customers",
+      );
       if (!res.ok) {
         throw new Error("Failed to fetch customers");
       }
@@ -78,7 +81,12 @@ function Page() {
     const normalized = query.toLowerCase().trim();
     if (!normalized) return customers;
     return customers.filter((customer) =>
-      [customer.CLIENT, customer.CODE_CLIENT, customer.CONTACT ?? "", customer.TEL ?? ""]
+      [
+        customer.CLIENT,
+        customer.CODE_CLIENT,
+        customer.CONTACT ?? "",
+        customer.TEL ?? "",
+      ]
         .join(" ")
         .toLowerCase()
         .includes(normalized),
@@ -86,7 +94,8 @@ function Page() {
   }, [customers, query]);
 
   const totalCalls = React.useMemo(
-    () => customers.reduce((sum, customer) => sum + customer._count.callSheets, 0),
+    () =>
+      customers.reduce((sum, customer) => sum + customer._count.callSheets, 0),
     [customers],
   );
 
@@ -94,7 +103,9 @@ function Page() {
     () =>
       customers.reduce(
         (sum, customer) =>
-          sum + customer.callSheets.filter((call) => call.status === "resolved").length,
+          sum +
+          customer.callSheets.filter((call) => call.status === "resolved")
+            .length,
         0,
       ),
     [customers],
@@ -172,7 +183,10 @@ function Page() {
                 <TableBody>
                   {filteredCustomers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="h-24 text-center text-muted-foreground"
+                      >
                         No customers found.
                       </TableCell>
                     </TableRow>
@@ -184,37 +198,52 @@ function Page() {
                       return (
                         <TableRow key={customer.id}>
                           <TableCell>{customer.CODE_CLIENT}</TableCell>
-                          <TableCell className="font-medium">{customer.CLIENT}</TableCell>
+                          <TableCell className="font-medium">
+                            {customer.CLIENT}
+                          </TableCell>
                           <TableCell>{customer.CONTACT || "-"}</TableCell>
                           <TableCell>{customer.TEL || "-"}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline">{customer._count.callSheets} total</Badge>
+                              <Badge variant="outline">
+                                {customer._count.callSheets} total
+                              </Badge>
                               <Badge>{resolvedCount} resolved</Badge>
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <Dialog>
-                              <DialogTrigger>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setSelectedCustomer(customer)}
-                                >
-                                  View
-                                </Button>
-                              </DialogTrigger>
+                              <DialogTrigger
+                                render={
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      setSelectedCustomer(customer)
+                                    }
+                                  >
+                                    View
+                                  </Button>
+                                }
+                              />
+
                               <DialogContent className="sm:max-w-xl">
                                 <DialogHeader>
-                                  <DialogTitle>Customer information</DialogTitle>
+                                  <DialogTitle>
+                                    Customer information
+                                  </DialogTitle>
                                   <DialogDescription>
-                                    Details and recent activity for this customer.
+                                    Details and recent activity for this
+                                    customer.
                                   </DialogDescription>
                                 </DialogHeader>
                                 {selectedCustomer && (
                                   <div className="space-y-4">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                      <InfoItem label="Name" value={selectedCustomer.CLIENT} />
+                                      <InfoItem
+                                        label="Name"
+                                        value={selectedCustomer.CLIENT}
+                                      />
                                       <InfoItem
                                         label="Code"
                                         value={selectedCustomer.CODE_CLIENT}
@@ -223,42 +252,61 @@ function Page() {
                                         label="Contact"
                                         value={selectedCustomer.CONTACT || "-"}
                                       />
-                                      <InfoItem label="Phone" value={selectedCustomer.TEL || "-"} />
-                                      <InfoItem label="Email" value={selectedCustomer.EMAIL || "-"} />
+                                      <InfoItem
+                                        label="Phone"
+                                        value={selectedCustomer.TEL || "-"}
+                                      />
+                                      <InfoItem
+                                        label="Email"
+                                        value={selectedCustomer.EMAIL || "-"}
+                                      />
                                       <InfoItem
                                         label="Location"
                                         value={
-                                          [selectedCustomer.COMMUNE, selectedCustomer.WILAYA]
+                                          [
+                                            selectedCustomer.COMMUNE,
+                                            selectedCustomer.WILAYA,
+                                          ]
                                             .filter(Boolean)
                                             .join(", ") || "-"
                                         }
                                       />
                                     </div>
                                     <div className="rounded-md border p-3">
-                                      <p className="text-sm font-medium mb-2">Address</p>
+                                      <p className="text-sm font-medium mb-2">
+                                        Address
+                                      </p>
                                       <p className="text-sm text-muted-foreground">
                                         {selectedCustomer.ADRESSE || "-"}
                                       </p>
                                     </div>
                                     <div className="rounded-md border p-3">
-                                      <p className="text-sm font-medium mb-2">Recent calls</p>
+                                      <p className="text-sm font-medium mb-2">
+                                        Recent calls
+                                      </p>
                                       <div className="space-y-2">
-                                        {selectedCustomer.callSheets.length === 0 ? (
+                                        {selectedCustomer.callSheets.length ===
+                                        0 ? (
                                           <p className="text-sm text-muted-foreground">
                                             No calls for this customer.
                                           </p>
                                         ) : (
-                                          selectedCustomer.callSheets.map((call) => (
-                                            <div
-                                              key={call.id}
-                                              className="flex items-center justify-between text-sm"
-                                            >
-                                              <span>
-                                                {call.problemType || "No problem type"}
-                                              </span>
-                                              <Badge variant="outline">{call.status}</Badge>
-                                            </div>
-                                          ))
+                                          selectedCustomer.callSheets.map(
+                                            (call) => (
+                                              <div
+                                                key={call.id}
+                                                className="flex items-center justify-between text-sm"
+                                              >
+                                                <span>
+                                                  {call.problemType ||
+                                                    "No problem type"}
+                                                </span>
+                                                <Badge variant="outline">
+                                                  {call.status}
+                                                </Badge>
+                                              </div>
+                                            ),
+                                          )
                                         )}
                                       </div>
                                     </div>

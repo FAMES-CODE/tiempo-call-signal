@@ -3,6 +3,14 @@
 import createFormSheet from "@/app/actions/form-sheet";
 import { Button } from "@/components/ui/button";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -18,14 +26,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -40,10 +41,10 @@ import {
   Loader2,
   Phone,
   Plus,
-  Search,
+  ChevronsUpDown,
   UserRound,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 
@@ -59,7 +60,7 @@ function NewformSheet() {
   const [open, setOpen] = useState(false);
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
-  const [customerQuery, setCustomerQuery] = useState("");
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
 
   const {
     register,
@@ -96,14 +97,6 @@ function NewformSheet() {
     }
   };
 
-  const filteredCustomers = useMemo(() => {
-    const q = customerQuery.trim().toLowerCase();
-    if (!q) return customers;
-    return customers.filter(
-      (c) => c.CLIENT.toLowerCase().includes(q) || String(c.id).includes(q),
-    );
-  }, [customers, customerQuery]);
-
   const onSubmit: SubmitHandler<FormSheetFormValues> = async (data) => {
     const result = await createFormSheet({
       status: "pending",
@@ -118,7 +111,6 @@ function NewformSheet() {
     if (result.success) {
       toast.success("Call sheet created successfully.");
       reset();
-      setCustomerQuery("");
       setOpen(false);
     } else {
       toast.error(result.error);
@@ -133,11 +125,11 @@ function NewformSheet() {
         if (next) {
           void loadCustomers();
         } else {
-          setCustomerQuery("");
+          setCustomerPickerOpen(false);
         }
       }}
     >
-      <DialogTrigger 
+      <DialogTrigger
         render={
           <Button
             type="button"
@@ -293,73 +285,68 @@ function NewformSheet() {
                 />
                 Customer
               </div>
-              <Field>
-                <FieldLabel htmlFor="customer-search">Find customer</FieldLabel>
-                <FieldDescription>
-                  Search by name or ID, then pick the account below.
-                </FieldDescription>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="customer-search"
-                    placeholder="Type to filter…"
-                    className="pl-9"
-                    value={customerQuery}
-                    onChange={(e) => setCustomerQuery(e.target.value)}
-                    disabled={loadingCustomers}
-                    autoComplete="off"
-                  />
-                </div>
-              </Field>
-
               <Controller
                 control={control}
                 name="customerId"
                 render={({ field }) => (
                   <Field className="mt-3">
                     <FieldLabel htmlFor="customerId">Account</FieldLabel>
-                    <Select
-                      value={field.value > 0 ? String(field.value) : undefined}
-                      onValueChange={(v) => field.onChange(Number(v))}
-                      disabled={loadingCustomers || customers.length === 0}
-                    >
-                      <SelectTrigger
+                    <FieldDescription>
+                      Search with command palette and select a customer.
+                    </FieldDescription>
+                    <div className="relative">
+                      <Button
                         id="customerId"
+                        type="button"
+                        variant="outline"
+                        onClick={() => setCustomerPickerOpen((prev) => !prev)}
+                        disabled={loadingCustomers}
                         className={cn(
-                          "w-full",
+                          "w-full justify-between font-normal",
                           errors.customerId && "border-destructive",
                         )}
                         aria-invalid={!!errors.customerId}
+                        aria-expanded={customerPickerOpen}
                       >
-                        <SelectValue
-                          placeholder={
-                            loadingCustomers
-                              ? "Loading customers…"
-                              : "Select a customer"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        <SelectGroup>
-                          {filteredCustomers.length === 0 ? (
-                            <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                              {customers.length === 0 && !loadingCustomers
-                                ? "No customers in the database."
-                                : "No matches. Try another search."}
-                            </div>
-                          ) : (
-                            filteredCustomers.map((c) => (
-                              <SelectItem key={c.id} value={String(c.id)}>
-                                <span className="font-mono text-xs text-muted-foreground">
-                                  #{c.id}
-                                </span>{" "}
-                                {c.CLIENT}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                        <span className="truncate">
+                          {field.value > 0
+                            ? (customers.find((c) => c.id === field.value)?.CLIENT ??
+                              "Select a customer")
+                            : loadingCustomers
+                              ? "Loading customers..."
+                              : "Select a customer"}
+                        </span>
+                        <ChevronsUpDown className="size-4 shrink-0 opacity-60" />
+                      </Button>
+                      {customerPickerOpen && (
+                        <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-xl border bg-popover shadow-lg">
+                          <Command>
+                            <CommandInput placeholder="Search customer..." />
+                            <CommandList>
+                              <CommandEmpty>No customers found.</CommandEmpty>
+                              <CommandGroup heading="Customers">
+                                {customers.map((c) => (
+                                  <CommandItem
+                                    key={c.id}
+                                    value={`${c.CLIENT} ${c.id}`}
+                                    data-checked={field.value === c.id}
+                                    onSelect={() => {
+                                      field.onChange(c.id);
+                                      setCustomerPickerOpen(false);
+                                    }}
+                                  >
+                                    <span className="font-mono text-xs text-muted-foreground">
+                                      #{c.id}
+                                    </span>
+                                    <span className="truncate">{c.CLIENT}</span>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </div>
+                      )}
+                    </div>
                     {errors.customerId?.message && (
                       <FieldError>{errors.customerId.message}</FieldError>
                     )}

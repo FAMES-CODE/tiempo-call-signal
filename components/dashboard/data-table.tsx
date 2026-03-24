@@ -1,6 +1,28 @@
 "use client";
 
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+import { useForm, SubmitHandler } from "react-hook-form";
+
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import {
   ColumnDef,
   ColumnFiltersState,
   flexRender,
@@ -23,6 +45,8 @@ import { Button } from "@/components/ui/button";
 
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { FormSheetT } from "@/lib/schemas/formsheetSchema";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -33,6 +57,13 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm();
+
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const table = useReactTable({
     data,
@@ -44,14 +75,57 @@ export function DataTable<TData, TValue>({
     state: { columnFilters },
   });
 
+  const session = useSession();
+  console.log(session);
+
+  if (session.status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  const onSubmit: SubmitHandler<FormSheetT> = async (data) => {
+    console.log(data);
+  };
+
+  const handleResolve = async (id: number) => {
+    console.log(id);
+    try {
+      const res = await fetch(
+        process.env.NEXT_PUBLIC_API_BASE_URL + "/api/sheets/" + id,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "resolved",
+            resolvedAt: new Date(),
+            resolvedById: session.data?.user?.id
+              ? parseInt(session.data.user.id)
+              : undefined,
+          }),
+        },
+      );
+      if (!res.ok) {
+        console.error("Failed to resolve:", res.status, res.statusText);
+        const text = await res.text();
+        console.error("Response:", text);
+        return;
+      }
+      const data = await res.json();
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter names..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          placeholder="Filter IDs..."
+          value={(table.getColumn("id")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("id")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -91,12 +165,111 @@ export function DataTable<TData, TValue>({
                       )}
                     </TableCell>
                   ))}
+                  <TableCell>
+                    {session.data?.user?.id &&
+                      parseInt(session.data.user.id) ==
+                        row.original.createdById && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              Edit
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit</DialogTitle>
+                              <DialogDescription>
+                                Make changes to the row data here.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div>
+                              <form onSubmit={handleSubmit(onSubmit)}>
+                                {row.getVisibleCells().map((cell) => {
+                                  if (
+                                    cell.column.columnDef.accessorKey ===
+                                      "id" ||
+                                    cell.column.columnDef.accessorKey ===
+                                      "customer.CLIENT" ||
+                                    cell.column.columnDef.accessorKey ===
+                                      "user.username"
+                                  )
+                                    return null;
+                                  return (
+                                    <div
+                                      key={cell.id}
+                                      className="mb-4 grid w-full items-center gap-2 grid-cols-2"
+                                    >
+                                      <label className="block text-sm font-medium mb-1">
+                                        {flexRender(
+                                          cell.column.columnDef.header,
+                                          cell.getContext(),
+                                        )}
+                                      </label>
+                                      {cell.column.columnDef.accessorKey ===
+                                      "status" ? (
+                                        <Select>
+                                          <SelectTrigger className="w-full">
+                                            <SelectValue
+                                              placeholder={
+                                                cell.getValue() as string
+                                              }
+                                            />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectGroup>
+                                              <SelectItem value="pending">
+                                                Pending
+                                              </SelectItem>
+                                              <SelectItem value="resolved">
+                                                Resolved
+                                              </SelectItem>
+                                            </SelectGroup>
+                                          </SelectContent>
+                                        </Select>
+                                      ) : (
+                                        <Input
+                                          defaultValue={
+                                            cell.getValue() as string
+                                          }
+                                          className="w-full"
+                                          {...register(
+                                            cell.column.columnDef.accessorKey,
+                                          )}
+                                        />
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                                <div className="grid gap-4 ">
+                                  <Button size="sm" type="submit">
+                                    Save changes
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    type="submit"
+                                    variant={"outline"}
+                                    onClick={() =>
+                                      handleResolve(row.original.id)
+                                    }
+                                  >
+                                    Set as resolved
+                                  </Button>
+                                  <Button variant="destructive" size="sm">
+                                    Delete row
+                                  </Button>
+                                </div>
+                              </form>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={columns.length + 1}
                   className="h-24 text-center"
                 >
                   No results.

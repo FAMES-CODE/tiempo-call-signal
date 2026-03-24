@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { LoginSchema } from "@/lib/schemas/authSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -46,7 +46,13 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
       console.log("Sign in response:", response);
 
       if (response?.error) {
-        notify(response.error || "Login failed. Please try again.", "error");
+        notify(
+          response.error === "CredentialsSignin"
+            ? "Invalid username or password"
+            : response.error || "Login failed. Please try again.",
+          "error",
+        );
+
         setIsSubmitting(false);
       } else if (response?.ok) {
         notify("Login successful!", "success");

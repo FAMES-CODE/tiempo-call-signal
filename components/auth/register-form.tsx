@@ -21,7 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterSchema } from "@/lib/schemas/authSchema";
 import type { RegisterSchema as RegisterSchemaType } from "@/lib/schemas/authSchema";
 import { useForm } from "react-hook-form";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 
 function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
   const {
@@ -77,7 +77,6 @@ function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
   };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <ToastContainer />
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create your account</CardTitle>

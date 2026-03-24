@@ -19,11 +19,12 @@ model User {
   role               String      @default("user")
   callSheets         CallSheet[] @relation("CreatedBy")
   resolvedCallSheets CallSheet[] @relation("ResolvedBy")
+  mustChangePassword Boolean     @default(false)
 }
 
 model Customer {
   id                    Int         @id @default(autoincrement())
-  RECORDID              Int
+  RECORDID              Int         @unique
   CODE_CLIENT           String
   CLIENT                String
   ACTIVITE              String?
@@ -80,7 +81,6 @@ model CallSheet {
   callNumber         String?
   user               User      @relation("CreatedBy", fields: [createdById], references: [id])
   createdById        Int
-  date               DateTime
   customer           Customer  @relation(fields: [customerId], references: [id])
   customerId         Int
   observation        String?

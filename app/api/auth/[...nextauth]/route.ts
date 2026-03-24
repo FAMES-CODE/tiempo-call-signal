@@ -59,11 +59,10 @@ export const authOptions = {
         if (!authResult) {
           console.log("Authentication failed");
           return null;
-        };
-        console.log(authResult);
+        }
         return {
           id: String(authResult.user.id),
-          name: authResult.user.username,
+          username: authResult.user.username,
           role: "user",
         };
       },
@@ -87,15 +86,30 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+
+        // Fetch full user data from DB
+        const dbUser = await prisma.user.findUnique({
+          where: { id: Number(user.id) },
+          omit: { password: true },
+        });
+
+        if (dbUser) {
+          token.username = dbUser.username;
+          token.role = dbUser.role;
+          // add any other fields you need
+        }
       }
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        (session.user as any).role = token.role as string;
-      }
-      return session;
+      return {
+        ...session,
+        user: {
+          id: token.id as string,
+          username: token.username as string,
+          role: token.role as string,
+        },
+      };
     },
   },
 } as const satisfies AuthOptions;

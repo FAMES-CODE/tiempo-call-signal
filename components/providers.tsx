@@ -1,8 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { ThemeProvider } from "./theme-provider";
 import { SessionProvider } from "next-auth/react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+import { ThemeProvider } from "./theme-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +15,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      <SessionProvider>{children}</SessionProvider>
+      <SessionProvider>
+        {children}
+        <ToastContainer
+          position="top-right"
+          theme="colored"
+          closeOnClick
+          pauseOnHover
+          className="z-[200]"
+        />
+      </SessionProvider>
     </ThemeProvider>
   );
 }

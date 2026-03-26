@@ -58,6 +58,7 @@ export type CallSheetRow = {
   callSim: string | null;
   callNumber: string | null;
   observation: string | null;
+  isSynced?: boolean;
   createdById: number;
   createdAt: string;
   updatedAt: string;
@@ -116,8 +117,15 @@ function CallDetailsDialog({
 }) {
   const [open, setOpen] = React.useState(false);
   const [resolving, setResolving] = React.useState(false);
+  const [creatingBon, setCreatingBon] = React.useState(false);
+  const [bonResult, setBonResult] = React.useState<string>("");
+  const [article, setArticle] = React.useState("");
+  const [qte, setQte] = React.useState<number>(1);
+  const [pvHt, setPvHt] = React.useState<number>(0);
+  const [tva, setTva] = React.useState<number>(0);
   const isOwner = currentUserId != null && row.createdById === currentUserId;
   const canResolve = isOwner && row.status === "pending";
+  const canSyncBon = row.status === "resolved" && !row.isSynced;
 
   const handleResolve = async () => {
     if (!currentUserId) return;
@@ -141,6 +149,52 @@ function CallDetailsDialog({
       }
     } finally {
       setResolving(false);
+    }
+  };
+
+  const handleCreateBon = async () => {
+    setCreatingBon(true);
+    setBonResult("");
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/firebird/bon1/from-call-sheet`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          callSheetId: row.id,
+          observation: row.observation ?? undefined,
+          lines: article.trim()
+            ? [
+                {
+                  produit: article.trim(),
+                  qte: Number.isFinite(qte) ? qte : 1,
+                  pv_ht: Number.isFinite(pvHt) ? pvHt : 0,
+                  tva: Number.isFinite(tva) ? tva : 0,
+                },
+              ]
+            : [],
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBonResult(
+          data?.details
+            ? `${String(data.error ?? "Error")}: ${String(data.details)}`
+            : data?.error
+              ? String(data.error)
+              : "Error Firebird",
+        );
+        return;
+      }
+      setBonResult(
+        `${data.alreadyExisted ? "Already existed" : "Created"}: NUM_BON=${data.num_bon} (recordid=${data.recordid})` +
+          (data.linesInserted ? ` · lignes=${data.linesInserted}` : ""),
+      );
+      onResolved();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Network error";
+      setBonResult(String(msg));
+    } finally {
+      setCreatingBon(false);
     }
   };
 
@@ -214,6 +268,69 @@ function CallDetailsDialog({
               <dd className="mt-0.5">{row.user.username}</dd>
             </div>
           </dl>
+          <div className="grid gap-2">
+            <div className="rounded-lg border bg-muted/20 p-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Bon Firebird
+              </p>
+              <div className="grid gap-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-3">
+                    <Input
+                      value={article}
+                      onChange={(e) => setArticle(e.target.value)}
+                      placeholder="Article (ex: Intervention / Pièce / Service...)"
+                    />
+                  </div>
+                  <Input
+                    value={String(qte)}
+                    onChange={(e) => setQte(Number(e.target.value))}
+                    placeholder="Qte"
+                  />
+                  <Input
+                    value={String(pvHt)}
+                    onChange={(e) => setPvHt(Number(e.target.value))}
+                    placeholder="PV HT"
+                  />
+                  <Input
+                    value={String(tva)}
+                    onChange={(e) => setTva(Number(e.target.value))}
+                    placeholder="TVA"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total HT:{" "}
+                  <span className="font-mono">
+                    {Number.isFinite(qte) && Number.isFinite(pvHt)
+                      ? (qte * pvHt).toFixed(2)
+                      : "—"}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              onClick={handleCreateBon}
+              disabled={creatingBon || !canSyncBon}
+              className="w-full"
+            >
+              {creatingBon ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                row.isSynced
+                  ? "Already synchronized"
+                  : row.status !== "resolved"
+                    ? "Resolve before sync"
+                    : "Create a Firebird note"
+              )}
+            </Button>
+            {bonResult ? (
+              <p className="text-xs font-mono text-muted-foreground">{bonResult}</p>
+            ) : null}
+          </div>
           <Link
             href="/dashboard/customers"
             className={buttonVariants({
@@ -373,6 +490,22 @@ export default function CallsPageView() {
         accessorKey: "status",
         header: "Status",
         cell: ({ getValue }) => statusBadge(getValue() as string),
+      },
+      {
+        id: "sync",
+        accessorFn: (r) => (r.isSynced ? "synced" : "not_synced"),
+        header: "Sync",
+        cell: ({ row }) =>
+          row.original.isSynced ? (
+            <Badge className="font-normal" variant="default">
+              Synced
+            </Badge>
+          ) : (
+            <Badge className="font-normal" variant="secondary">
+              Not synced
+            </Badge>
+          ),
+        size: 110,
       },
       {
         id: "actions",

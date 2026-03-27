@@ -1,21 +1,14 @@
-"use client";
-import { FirebirdToSQLiteSync } from "@/app/jobs/databases/databse-jobs";
-import { Button } from "@/components/ui/button";
-import React from "react";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import AdminPageView from "@/components/dashboard/admin/admin-page-view";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 
-function Page() {
-  const handleSync = async () => {
-    try {
-      FirebirdToSQLiteSync();
-    } catch (error) {
-      console.error("Error syncing customers:", error);
-    }
-  };
-  return (
-    <div>
-      <Button onClick={handleSync}>Sync customers from firebird DB</Button>
-    </div>
-  );
+export default async function Page() {
+  const session = await getServerSession(authOptions);
+
+  if (!session || session.user.role !== "admin") {
+    redirect("/dashboard");
+  }
+
+  return <AdminPageView />;
 }
-
-export default Page;

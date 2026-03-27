@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   (req) => {
+    const isAdminRoute =
+      req.nextUrl.pathname.startsWith("/dashboard/admin") ||
+      req.nextUrl.pathname.startsWith("/api/admin");
+    const role = req.nextauth.token?.role;
+
     // If user is authenticated and trying to access login page (/), redirect to dashboard
     if (req.nextUrl.pathname === "/" && req.nextauth.token) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
@@ -10,6 +15,10 @@ export default withAuth(
 
     // If user is authenticated and trying to access register, redirect to dashboard
     if (req.nextUrl.pathname === "/register" && req.nextauth.token) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    if (isAdminRoute && role !== "admin") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 

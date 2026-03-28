@@ -83,7 +83,7 @@ export default function AdminPageView() {
     setSyncing(true);
     setSyncMessage("");
     try {
-      const res = await fetch("/api/admin/sync-customers", { method: "POST" });
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/admin/sync-customers", { method: "POST" });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         setSyncMessage(body?.error ? String(body.error) : "Sync failed");
@@ -103,7 +103,7 @@ export default function AdminPageView() {
     setResetMessage("");
 
     try {
-      const res = await fetch(`/api/admin/users/${selectedUserId}/reset-password`, {
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + `/api/admin/users/${selectedUserId}/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -19,3 +19,16 @@ export const LoginSchema = z.object({
 });
 
 export type LoginSchema = z.infer<typeof LoginSchema>;
+
+export const ChangePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z.string().min(8, "At least 8 characters"),
+    confirmPassword: z.string().min(1, "Confirmation is required"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export type ChangePasswordFormValues = z.infer<typeof ChangePasswordSchema>;

@@ -373,7 +373,7 @@ export default function CallsPageView() {
   const currentUserId = session?.user?.id ? parseInt(session.user.id, 10) : null;
 
   const { data, error, isLoading, mutate } = useSWR<CallSheetRow[]>(
-    process.env.NEXT_PUBLIC_API_BASE_URL + "/api/sheets",
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets`,
     fetcher,
     { refreshInterval: 30000 },
   );

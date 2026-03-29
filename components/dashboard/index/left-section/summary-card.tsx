@@ -27,7 +27,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 function SummaryCard() {
   const { data: cases = [] } = useSWR<CaseItem[]>(
-    process.env.NEXT_PUBLIC_API_BASE_URL + "/api/sheets",
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets`,
     fetcher,
     { refreshInterval: 30000 },
   );

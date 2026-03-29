@@ -64,6 +64,7 @@ function userName(users: AdminUser[], userId: number) {
 }
 
 export default function AdminPageView() {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
   const currentYear = new Date().getFullYear();
   const [year, setYear] = React.useState(String(currentYear));
   const [syncing, setSyncing] = React.useState(false);
@@ -79,11 +80,17 @@ export default function AdminPageView() {
     { refreshInterval: 30000 },
   );
 
+  const selectedUserLabel = React.useMemo(() => {
+    if (!data || !selectedUserId) return "";
+    const selected = data.users.find((u) => String(u.id) === selectedUserId);
+    return selected?.username ?? "";
+  }, [data, selectedUserId]);
+
   const onSyncCustomers = async () => {
     setSyncing(true);
     setSyncMessage("");
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/admin/sync-customers", { method: "POST" });
+      const res = await fetch(`${apiBaseUrl}/api/admin/sync-customers`, { method: "POST" });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         setSyncMessage(body?.error ? String(body.error) : "Sync failed");
@@ -103,7 +110,7 @@ export default function AdminPageView() {
     setResetMessage("");
 
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + `/api/admin/users/${selectedUserId}/reset-password`, {
+      const res = await fetch(`${apiBaseUrl}/api/admin/users/${selectedUserId}/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -353,7 +360,9 @@ export default function AdminPageView() {
                       onValueChange={(value) => setSelectedUserId(value ?? "")}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select user" />
+                        <span className={!selectedUserLabel ? "text-muted-foreground" : ""}>
+                          {selectedUserLabel || "Select user"}
+                        </span>
                       </SelectTrigger>
                       <SelectContent>
                         {data.users

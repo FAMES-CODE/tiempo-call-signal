@@ -1,34 +1,17 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import useSWR from "swr";
-import { Loader2, RefreshCw, Settings2, ShieldAlert, UserRoundCog } from "lucide-react";
+import { CalendarDays, Loader2, RefreshCw, Settings2, Users } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-type AdminUser = {
-  id: number;
-  username: string;
-  role: string;
-};
+type AdminUser = { id: number; username: string; role: string };
 
 type AdminStatsResponse = {
   overview: {
@@ -43,11 +26,6 @@ type AdminStatsResponse = {
   year: number;
   availableYears: number[];
   users: AdminUser[];
-  sheetsPerMonth: Array<{ month: string; count: number }>;
-  sheetsPerUser: Array<{ userId: number; count: number }>;
-  sheetsPerUserByMonth: Array<{ userId: number; month: string; count: number }>;
-  resolvedByUser: Array<{ userId: number; count: number }>;
-  resolvedByUserByMonth: Array<{ userId: number; month: string; count: number }>;
 };
 
 const fetcher = async (url: string) => {
@@ -59,32 +37,22 @@ const fetcher = async (url: string) => {
   return (await res.json()) as AdminStatsResponse;
 };
 
-function userName(users: AdminUser[], userId: number) {
-  return users.find((u) => u.id === userId)?.username ?? `#${userId}`;
-}
-
 export default function AdminPageView() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
-  const currentYear = new Date().getFullYear();
-  const [year, setYear] = React.useState(String(currentYear));
+
   const [syncing, setSyncing] = React.useState(false);
   const [syncMessage, setSyncMessage] = React.useState("");
+
   const [selectedUserId, setSelectedUserId] = React.useState<string>("");
   const [newPassword, setNewPassword] = React.useState("");
   const [resetLoading, setResetLoading] = React.useState(false);
   const [resetMessage, setResetMessage] = React.useState("");
 
   const { data, error, isLoading, mutate } = useSWR<AdminStatsResponse>(
-    `/api/admin/stats?year=${year}`,
+    "/api/admin/stats",
     fetcher,
     { refreshInterval: 30000 },
   );
-
-  const selectedUserLabel = React.useMemo(() => {
-    if (!data || !selectedUserId) return "";
-    const selected = data.users.find((u) => String(u.id) === selectedUserId);
-    return selected?.username ?? "";
-  }, [data, selectedUserId]);
 
   const onSyncCustomers = async () => {
     setSyncing(true);
@@ -108,7 +76,6 @@ export default function AdminPageView() {
     if (!selectedUserId) return;
     setResetLoading(true);
     setResetMessage("");
-
     try {
       const res = await fetch(`${apiBaseUrl}/api/admin/users/${selectedUserId}/reset-password`, {
         method: "POST",
@@ -146,25 +113,32 @@ export default function AdminPageView() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Admin dashboard</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Monitor user activity and app usage by year/month, and execute admin-only actions.
+            Simple overview and quick actions. Open a user page for detailed year/day analytics.
+          </p>
+          <p className="mt-2 inline-flex items-center gap-2 text-xs text-muted-foreground">
+            <CalendarDays className="size-4" aria-hidden />
+            {new Date().toLocaleDateString(undefined, {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Select value={year} onValueChange={(value) => setYear(value ?? String(currentYear))}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Year" />
-            </SelectTrigger>
-            <SelectContent>
-              {(data?.availableYears ?? [currentYear]).map((y) => (
-                <SelectItem key={y} value={String(y)}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           <Button type="button" variant="outline" onClick={() => void mutate()} disabled={isLoading}>
             <RefreshCw className={isLoading ? "size-4 animate-spin" : "size-4"} />
             Refresh
+          </Button>
+          <Button type="button" onClick={onSyncCustomers} disabled={syncing}>
+            {syncing ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Syncing...
+              </>
+            ) : (
+              "Sync customers"
+            )}
           </Button>
         </div>
       </section>
@@ -193,9 +167,7 @@ export default function AdminPageView() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold tabular-nums">{data.overview.totalUsers}</p>
-                <p className="text-xs text-muted-foreground">
-                  {data.overview.totalAdmins} admin(s)
-                </p>
+                <p className="text-xs text-muted-foreground">{data.overview.totalAdmins} admin(s)</p>
               </CardContent>
             </Card>
             <Card>
@@ -213,7 +185,6 @@ export default function AdminPageView() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold tabular-nums">{data.overview.pendingSheets}</p>
-                <p className="text-xs text-muted-foreground">Global pending sheets</p>
               </CardContent>
             </Card>
             <Card className="border-emerald-500/30 bg-emerald-500/5">
@@ -222,105 +193,48 @@ export default function AdminPageView() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold tabular-nums">{data.overview.resolvedSheets}</p>
-                <p className="text-xs text-muted-foreground">Global resolved sheets</p>
               </CardContent>
             </Card>
           </div>
 
+          {syncMessage ? (
+            <Card>
+              <CardContent className="pt-6 text-sm">{syncMessage}</CardContent>
+            </Card>
+          ) : null}
+
           <div className="grid gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Sheets per month ({data.year})</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Month</TableHead>
-                      <TableHead className="text-right">Count</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.sheetsPerMonth.length ? (
-                      data.sheetsPerMonth.map((row) => (
-                        <TableRow key={row.month}>
-                          <TableCell className="font-medium">{row.month}</TableCell>
-                          <TableCell className="text-right tabular-nums">{row.count}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={2} className="h-16 text-center text-muted-foreground">
-                          No data for this year.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Sheets per user ({data.year})</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="size-4 text-muted-foreground" aria-hidden />
+                  Users
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>User</TableHead>
-                      <TableHead className="text-right">Created sheets</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead className="text-right">Analytics</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.sheetsPerUser.length ? (
-                      data.sheetsPerUser.map((row) => (
-                        <TableRow key={row.userId}>
-                          <TableCell>{userName(data.users, row.userId)}</TableCell>
-                          <TableCell className="text-right tabular-nums">{row.count}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={2} className="h-16 text-center text-muted-foreground">
-                          No user activity for this year.
+                    {data.users.map((u) => (
+                      <TableRow key={u.id}>
+                        <TableCell className="font-medium">{u.username}</TableCell>
+                        <TableCell className="text-muted-foreground">{u.role}</TableCell>
+                        <TableCell className="text-right">
+                          <Link
+                            href={`/dashboard/admin/user/${u.id}`}
+                            className="text-sm font-medium text-primary hover:underline"
+                          >
+                            View stats
+                          </Link>
                         </TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Resolved by user ({data.year})</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead className="text-right">Resolved sheets</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.resolvedByUser.length ? (
-                      data.resolvedByUser.map((row) => (
-                        <TableRow key={row.userId}>
-                          <TableCell>{userName(data.users, row.userId)}</TableCell>
-                          <TableCell className="text-right tabular-nums">{row.count}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={2} className="h-16 text-center text-muted-foreground">
-                          No resolved activity for this year.
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -328,41 +242,15 @@ export default function AdminPageView() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Admin actions</CardTitle>
+                <CardTitle>Quick actions</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
                 <div className="rounded-lg border p-3">
-                  <p className="mb-2 flex items-center gap-2 text-sm font-medium">
-                    <ShieldAlert className="size-4" />
-                    Sync customers from Firebird
-                  </p>
-                  <Button type="button" onClick={onSyncCustomers} disabled={syncing}>
-                    {syncing ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" />
-                        Syncing...
-                      </>
-                    ) : (
-                      "Run synchronization"
-                    )}
-                  </Button>
-                  {syncMessage ? <p className="mt-2 text-xs text-muted-foreground">{syncMessage}</p> : null}
-                </div>
-
-                <div className="rounded-lg border p-3">
-                  <p className="mb-2 flex items-center gap-2 text-sm font-medium">
-                    <UserRoundCog className="size-4" />
-                    Reset user password
-                  </p>
+                  <p className="mb-2 text-sm font-medium">Reset user password</p>
                   <div className="grid gap-2">
-                    <Select
-                      value={selectedUserId}
-                      onValueChange={(value) => setSelectedUserId(value ?? "")}
-                    >
+                    <Select value={selectedUserId} onValueChange={(v) => setSelectedUserId(v ?? "")}>
                       <SelectTrigger>
-                        <span className={!selectedUserLabel ? "text-muted-foreground" : ""}>
-                          {selectedUserLabel || "Select user"}
-                        </span>
+                        <SelectValue placeholder="Select user" />
                       </SelectTrigger>
                       <SelectContent>
                         {data.users
@@ -377,13 +265,9 @@ export default function AdminPageView() {
                     <Input
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Temporary password (optional, auto-generated if empty)"
+                      placeholder="Temporary password (optional)"
                     />
-                    <Button
-                      type="button"
-                      onClick={onResetPassword}
-                      disabled={!selectedUserId || resetLoading}
-                    >
+                    <Button type="button" onClick={onResetPassword} disabled={!selectedUserId || resetLoading}>
                       {resetLoading ? (
                         <>
                           <Loader2 className="size-4 animate-spin" />
@@ -394,86 +278,16 @@ export default function AdminPageView() {
                       )}
                     </Button>
                   </div>
-                  {resetMessage ? <p className="mt-2 text-xs text-muted-foreground">{resetMessage}</p> : null}
+                  {resetMessage ? (
+                    <p className="mt-2 text-xs text-muted-foreground">{resetMessage}</p>
+                  ) : null}
                 </div>
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Resolved by user by month ({data.year})</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Month</TableHead>
-                    <TableHead className="text-right">Resolved count</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.resolvedByUserByMonth.length ? (
-                    data.resolvedByUserByMonth.map((row) => (
-                      <TableRow key={`${row.userId}-${row.month}`}>
-                        <TableCell className="font-medium">
-                          {userName(data.users, row.userId)}
-                          <Badge variant="outline" className="ml-2">
-                            user
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{row.month}</TableCell>
-                        <TableCell className="text-right tabular-nums">{row.count}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} className="h-16 text-center text-muted-foreground">
-                        No resolved monthly records.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Sheets by user by month ({data.year})</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Month</TableHead>
-                    <TableHead className="text-right">Created count</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.sheetsPerUserByMonth.length ? (
-                    data.sheetsPerUserByMonth.map((row) => (
-                      <TableRow key={`${row.userId}-${row.month}`}>
-                        <TableCell>{userName(data.users, row.userId)}</TableCell>
-                        <TableCell>{row.month}</TableCell>
-                        <TableCell className="text-right tabular-nums">{row.count}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} className="h-16 text-center text-muted-foreground">
-                        No monthly user records.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
         </>
       ) : null}
     </div>
   );
 }
+

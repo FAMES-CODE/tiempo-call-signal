@@ -1,14 +1,17 @@
-import { FirebirdToSQLiteSync } from "@/app/jobs/databases/databse-jobs";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { syncCustomers } from "@/lib/firebird-db/customers-actions";
 
 export async function POST() {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    await syncCustomers();
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error syncing customers from admin endpoint:", error);
+    return NextResponse.json(
+      { error: "Failed to sync customers" },
+      { status: 500 },
+    );
   }
-
-  await FirebirdToSQLiteSync();
-  return NextResponse.json({ ok: true });
 }
+
+

@@ -123,8 +123,7 @@ function CallDetailsDialog({
   const [qte, setQte] = React.useState<number>(1);
   const [pvHt, setPvHt] = React.useState<number>(0);
   const [tva, setTva] = React.useState<number>(0);
-  const isOwner = currentUserId != null && row.createdById === currentUserId;
-  const canResolve = isOwner && row.status === "pending";
+  const canResolve = row.status === "pending";
   const canSyncBon = row.status === "resolved" && !row.isSynced;
 
   const handleResolve = async () => {

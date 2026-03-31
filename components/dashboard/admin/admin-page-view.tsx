@@ -3,13 +3,31 @@
 import * as React from "react";
 import Link from "next/link";
 import useSWR from "swr";
-import { CalendarDays, Loader2, RefreshCw, Settings2, Users } from "lucide-react";
+import {
+  CalendarDays,
+  Loader2,
+  Settings2,
+  Users,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type AdminUser = { id: number; username: string; role: string };
 
@@ -58,7 +76,9 @@ export default function AdminPageView() {
     setSyncing(true);
     setSyncMessage("");
     try {
-      const res = await fetch(`${apiBaseUrl}/api/admin/sync-customers`, { method: "POST" });
+      const res = await fetch(`${apiBaseUrl}/api/admin/sync-customers`, {
+        method: "POST",
+      });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         setSyncMessage(body?.error ? String(body.error) : "Sync failed");
@@ -77,16 +97,21 @@ export default function AdminPageView() {
     setResetLoading(true);
     setResetMessage("");
     try {
-      const res = await fetch(`${apiBaseUrl}/api/admin/users/${selectedUserId}/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          newPassword: newPassword.trim() || undefined,
-        }),
-      });
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/users/${selectedUserId}/reset-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            newPassword: newPassword.trim() || undefined,
+          }),
+        },
+      );
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setResetMessage(body?.error ? String(body.error) : "Password reset failed");
+        setResetMessage(
+          body?.error ? String(body.error) : "Password reset failed",
+        );
         return;
       }
       setResetMessage(
@@ -113,7 +138,8 @@ export default function AdminPageView() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Admin dashboard</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Simple overview and quick actions. Open a user page for detailed year/day analytics.
+            Simple overview and quick actions. Open a user page for detailed
+            year/day analytics.
           </p>
           <p className="mt-2 inline-flex items-center gap-2 text-xs text-muted-foreground">
             <CalendarDays className="size-4" aria-hidden />
@@ -126,10 +152,6 @@ export default function AdminPageView() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" onClick={() => void mutate()} disabled={isLoading}>
-            <RefreshCw className={isLoading ? "size-4 animate-spin" : "size-4"} />
-            Refresh
-          </Button>
           <Button type="button" onClick={onSyncCustomers} disabled={syncing}>
             {syncing ? (
               <>
@@ -163,36 +185,56 @@ export default function AdminPageView() {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Total users</CardTitle>
+                <CardTitle className="text-sm text-muted-foreground">
+                  Total users
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold tabular-nums">{data.overview.totalUsers}</p>
-                <p className="text-xs text-muted-foreground">{data.overview.totalAdmins} admin(s)</p>
+                <p className="text-3xl font-bold tabular-nums">
+                  {data.overview.totalUsers}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {data.overview.totalAdmins} admin(s)
+                </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">All sheets</CardTitle>
+                <CardTitle className="text-sm text-muted-foreground">
+                  All sheets
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold tabular-nums">{data.overview.totalSheets}</p>
-                <p className="text-xs text-muted-foreground">Across all years</p>
+                <p className="text-3xl font-bold tabular-nums">
+                  {data.overview.totalSheets}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Across all years
+                </p>
               </CardContent>
             </Card>
             <Card className="border-amber-500/30 bg-amber-500/5">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-amber-900 dark:text-amber-100">Pending</CardTitle>
+                <CardTitle className="text-sm text-amber-900 dark:text-amber-100">
+                  Pending
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold tabular-nums">{data.overview.pendingSheets}</p>
+                <p className="text-3xl font-bold tabular-nums">
+                  {data.overview.pendingSheets}
+                </p>
               </CardContent>
             </Card>
             <Card className="border-emerald-500/30 bg-emerald-500/5">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-emerald-900 dark:text-emerald-100">Resolved</CardTitle>
+                <CardTitle className="text-sm text-emerald-900 dark:text-emerald-100">
+                  Resolved
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold tabular-nums">{data.overview.resolvedSheets}</p>
+                <p className="text-3xl font-bold tabular-nums">
+                  {data.overview.resolvedSheets}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -223,8 +265,12 @@ export default function AdminPageView() {
                   <TableBody>
                     {data.users.map((u) => (
                       <TableRow key={u.id}>
-                        <TableCell className="font-medium">{u.username}</TableCell>
-                        <TableCell className="text-muted-foreground">{u.role}</TableCell>
+                        <TableCell className="font-medium">
+                          {u.username}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {u.role}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Link
                             href={`/dashboard/admin/user/${u.id}`}
@@ -246,9 +292,14 @@ export default function AdminPageView() {
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
                 <div className="rounded-lg border p-3">
-                  <p className="mb-2 text-sm font-medium">Reset user password</p>
+                  <p className="mb-2 text-sm font-medium">
+                    Reset user password
+                  </p>
                   <div className="grid gap-2">
-                    <Select value={selectedUserId} onValueChange={(v) => setSelectedUserId(v ?? "")}>
+                    <Select
+                      value={selectedUserId}
+                      onValueChange={(v) => setSelectedUserId(v ?? "")}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select user" />
                       </SelectTrigger>
@@ -267,7 +318,11 @@ export default function AdminPageView() {
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Temporary password (optional)"
                     />
-                    <Button type="button" onClick={onResetPassword} disabled={!selectedUserId || resetLoading}>
+                    <Button
+                      type="button"
+                      onClick={onResetPassword}
+                      disabled={!selectedUserId || resetLoading}
+                    >
                       {resetLoading ? (
                         <>
                           <Loader2 className="size-4 animate-spin" />
@@ -279,7 +334,9 @@ export default function AdminPageView() {
                     </Button>
                   </div>
                   {resetMessage ? (
-                    <p className="mt-2 text-xs text-muted-foreground">{resetMessage}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {resetMessage}
+                    </p>
                   ) : null}
                 </div>
               </CardContent>
@@ -290,4 +347,3 @@ export default function AdminPageView() {
     </div>
   );
 }
-

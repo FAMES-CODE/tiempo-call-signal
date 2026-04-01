@@ -49,6 +49,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 
 export type CallSheetRow = {
   id: number;
@@ -75,8 +76,10 @@ function statusBadge(status: string) {
       variant={pending ? "secondary" : "default"}
       className={cn(
         "font-medium capitalize",
-        pending && "bg-amber-500/15 text-amber-950 hover:bg-amber-500/20 dark:text-amber-100",
-        !pending && "bg-emerald-600/15 text-emerald-900 hover:bg-emerald-600/20 dark:text-emerald-100",
+        pending &&
+          "bg-amber-500/15 text-amber-950 hover:bg-amber-500/20 dark:text-amber-100",
+        !pending &&
+          "bg-emerald-600/15 text-emerald-900 hover:bg-emerald-600/20 dark:text-emerald-100",
       )}
     >
       {pending ? (
@@ -121,8 +124,7 @@ function CallDetailsDialog({
   const [bonResult, setBonResult] = React.useState<string>("");
   const [article, setArticle] = React.useState("");
   const [qte, setQte] = React.useState<number>(1);
-  const [pvHt, setPvHt] = React.useState<number>(0);
-  const [tva, setTva] = React.useState<number>(0);
+  const [pvHtAr, setPvHtAr] = React.useState<number>(0);
   const canResolve = row.status === "pending";
   const canSyncBon = row.status === "resolved" && !row.isSynced;
 
@@ -155,24 +157,26 @@ function CallDetailsDialog({
     setCreatingBon(true);
     setBonResult("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/firebird/bon1/from-call-sheet`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          callSheetId: row.id,
-          observation: row.observation ?? undefined,
-          lines: article.trim()
-            ? [
-                {
-                  produit: article.trim(),
-                  qte: Number.isFinite(qte) ? qte : 1,
-                  pv_ht: Number.isFinite(pvHt) ? pvHt : 0,
-                  tva: Number.isFinite(tva) ? tva : 0,
-                },
-              ]
-            : [],
-        }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/firebird/bon1/from-call-sheet`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            callSheetId: row.id,
+            observation: row.observation ?? undefined,
+            lines: article.trim()
+              ? [
+                  {
+                    produit: article.trim(),
+                    qte: Number.isFinite(qte) ? qte : 1,
+                    PV_HT_AR: Number.isFinite(pvHtAr) ? pvHtAr : 0,
+                  },
+                ]
+              : [],
+          }),
+        },
+      );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setBonResult(
@@ -258,7 +262,9 @@ function CallDetailsDialog({
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Observation
               </dt>
-              <dd className="mt-0.5 whitespace-pre-wrap">{row.observation || "—"}</dd>
+              <dd className="mt-0.5 whitespace-pre-wrap">
+                {row.observation || "—"}
+              </dd>
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -281,27 +287,28 @@ function CallDetailsDialog({
                       placeholder="Article (ex: Intervention / Pièce / Service...)"
                     />
                   </div>
-                  <Input
-                    value={String(qte)}
-                    onChange={(e) => setQte(Number(e.target.value))}
-                    placeholder="Qte"
-                  />
-                  <Input
-                    value={String(pvHt)}
-                    onChange={(e) => setPvHt(Number(e.target.value))}
-                    placeholder="PV HT"
-                  />
-                  <Input
-                    value={String(tva)}
-                    onChange={(e) => setTva(Number(e.target.value))}
-                    placeholder="TVA"
-                  />
+                  <div className="col-span-1">
+                    <Label>Quantité</Label>
+                    <Input
+                      value={String(qte)}
+                      onChange={(e) => setQte(Number(e.target.value))}
+                      placeholder="Qte"
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <Label>Prix</Label>
+                    <Input
+                      value={String(pvHtAr)}
+                      onChange={(e) => setPvHtAr(Number(e.target.value))}
+                      placeholder="PV HT"
+                    />
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Total HT:{" "}
                   <span className="font-mono">
-                    {Number.isFinite(qte) && Number.isFinite(pvHt)
-                      ? (qte * pvHt).toFixed(2)
+                    {Number.isFinite(qte) && Number.isFinite(pvHtAr)
+                      ? (qte * pvHtAr).toFixed(2)
                       : "—"}
                   </span>
                 </p>
@@ -318,16 +325,18 @@ function CallDetailsDialog({
                   <Loader2 className="size-4 animate-spin" />
                   Creating...
                 </>
+              ) : row.isSynced ? (
+                "Already synchronized"
+              ) : row.status !== "resolved" ? (
+                "Resolve before sync"
               ) : (
-                row.isSynced
-                  ? "Already synchronized"
-                  : row.status !== "resolved"
-                    ? "Resolve before sync"
-                    : "Create a Firebird note"
+                "Create a Firebird note"
               )}
             </Button>
             {bonResult ? (
-              <p className="text-xs font-mono text-muted-foreground">{bonResult}</p>
+              <p className="text-xs font-mono text-muted-foreground">
+                {bonResult}
+              </p>
             ) : null}
           </div>
           <Link
@@ -369,7 +378,9 @@ function CallDetailsDialog({
 
 export default function CallsPageView() {
   const { data: session, status: sessionStatus } = useSession();
-  const currentUserId = session?.user?.id ? parseInt(session.user.id, 10) : null;
+  const currentUserId = session?.user?.id
+    ? parseInt(session.user.id, 10)
+    : null;
 
   const { data, error, isLoading, mutate } = useSWR<CallSheetRow[]>(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets`,
@@ -380,9 +391,9 @@ export default function CallsPageView() {
   const rows = data ?? [];
 
   const [query, setQuery] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<"all" | "pending" | "resolved">(
-    "all",
-  );
+  const [statusFilter, setStatusFilter] = React.useState<
+    "all" | "pending" | "resolved"
+  >("all");
 
   const filteredRows = React.useMemo(() => {
     let list = rows;
@@ -444,7 +455,9 @@ export default function CallsPageView() {
         accessorKey: "callNumber",
         header: "Number",
         cell: ({ getValue }) => (
-          <span className="tabular-nums">{getValue() as string | null || "—"}</span>
+          <span className="tabular-nums">
+            {(getValue() as string | null) || "—"}
+          </span>
         ),
       },
       {
@@ -452,7 +465,7 @@ export default function CallsPageView() {
         header: "Line",
         cell: ({ getValue }) => (
           <Badge variant="outline" className="font-normal">
-            {getValue() as string | null || "—"}
+            {(getValue() as string | null) || "—"}
           </Badge>
         ),
       },
@@ -460,7 +473,10 @@ export default function CallsPageView() {
         accessorKey: "problemType",
         header: "Problem",
         cell: ({ getValue }) => (
-          <span className="max-w-[140px] truncate" title={(getValue() as string) ?? ""}>
+          <span
+            className="max-w-[140px] truncate"
+            title={(getValue() as string) ?? ""}
+          >
             {truncate(getValue() as string | null, 40)}
           </span>
         ),
@@ -482,7 +498,9 @@ export default function CallsPageView() {
         accessorFn: (r) => r.user?.username ?? "",
         header: "Created by",
         cell: ({ row }) => (
-          <span className="text-muted-foreground">{row.original.user?.username ?? "—"}</span>
+          <span className="text-muted-foreground">
+            {row.original.user?.username ?? "—"}
+          </span>
         ),
       },
       {
@@ -548,8 +566,8 @@ export default function CallsPageView() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Calls</h1>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            Review support calls, filter by status, and open a row for full details. You can
-            mark your own pending calls as resolved.
+            Review support calls, filter by status, and open a row for full
+            details. You can mark your own pending calls as resolved.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -575,7 +593,9 @@ export default function CallsPageView() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <p className="text-sm font-medium text-muted-foreground">Total calls</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Total calls
+            </p>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold tabular-nums">{stats.total}</p>
@@ -610,7 +630,10 @@ export default function CallsPageView() {
       <Card className="overflow-hidden shadow-sm">
         <CardHeader className="flex flex-col gap-4 border-b bg-muted/20 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <SlidersHorizontal className="size-4 text-muted-foreground" aria-hidden />
+            <SlidersHorizontal
+              className="size-4 text-muted-foreground"
+              aria-hidden
+            />
             Filters
           </div>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
@@ -722,7 +745,10 @@ export default function CallsPageView() {
                       filteredRows.length,
                     )}
                   </span>{" "}
-                  of <span className="font-medium text-foreground">{filteredRows.length}</span>
+                  of{" "}
+                  <span className="font-medium text-foreground">
+                    {filteredRows.length}
+                  </span>
                   {filteredRows.length !== rows.length && (
                     <span> (filtered from {rows.length})</span>
                   )}

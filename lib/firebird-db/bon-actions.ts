@@ -79,7 +79,7 @@ export async function createBon1ForCallSheet(
     : baseTrace;
 
   await firebirdQuery(
-    "INSERT INTO bon1 (num_bon, date_bon, heure, code_client, ref_bon, autre_info, blocage, jrnl, utilisateur) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO bon1 (num_bon, date_bon, heure, code_client, ref_bon, autre_info, blocage, jrnl, utilisateur, mode_rg, REMISE, TOT_REMISE) VALUES (?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     [
       numBon,
       now,
@@ -90,6 +90,9 @@ export async function createBon1ForCallSheet(
       "F",
       2,
       input.utilisateur ?? null,
+      "A TERME",
+      0.0,
+      0.0,
     ],
   );
 
@@ -107,8 +110,7 @@ export async function createBon1ForCallSheet(
 export type Bon2LineInput = {
   produit: string;
   qte?: number | null;
-  pv_ht?: number | null;
-  tva?: number | null;
+  PV_HT_AR?: number | null;
 };
 
 export async function insertBon2Line(
@@ -127,14 +129,14 @@ export async function insertBon2Line(
   }
 
   await firebirdQuery(
-    "INSERT INTO bon2 (recordid, num_bon, produit, qte, pv_ht, tva) VALUES (?, ?, ?, ?, ?, ?)",
+    "INSERT INTO bon2 (recordid, num_bon, produit, qte, PV_HT_AR, PV_HT) VALUES (?,?, ?, ?, ?, ?)",
     [
       recordid,
       numBon,
       produit,
       line.qte ?? null,
-      line.pv_ht ?? null,
-      line.tva ?? null,
+      line.PV_HT_AR ?? null,
+      line.PV_HT_AR ?? null,
     ],
   );
 

@@ -273,6 +273,12 @@ function CallDetailsDialog({
               <dd className="mt-0.5">{row.user.username}</dd>
             </div>
           </dl>
+          <div className="rounded-lg border bg-muted/20 p-3">
+            <h1 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Add pictures
+            </h1>
+            <Input type="file" multiple accept="image/*" disabled />
+          </div>
           <div className="grid gap-2">
             <div className="rounded-lg border bg-muted/20 p-3">
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -287,7 +293,7 @@ function CallDetailsDialog({
                       placeholder="Article (ex: Intervention / Pièce / Service...)"
                     />
                   </div>
-                  <div className="col-span-1">
+                  <div className="flex flex-col col-span-1 gap-2">
                     <Label>Quantité</Label>
                     <Input
                       value={String(qte)}
@@ -295,7 +301,7 @@ function CallDetailsDialog({
                       placeholder="Qte"
                     />
                   </div>
-                  <div className="col-span-1">
+                  <div className="flex flex-col col-span-1 gap-2">
                     <Label>Prix</Label>
                     <Input
                       value={String(pvHtAr)}

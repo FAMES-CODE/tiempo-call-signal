@@ -73,21 +73,30 @@ model Customer {
 }
 
 model CallSheet {
-  id                 Int       @id @default(autoincrement())
-  status             String    @default("pending")
+  id                 Int                @id @default(autoincrement())
+  status             String             @default("pending")
+  rate               Int?               @default(0)
   problemType        String?
   problemDescription String?
   callSim            String?
   callNumber         String?
-  user               User      @relation("CreatedBy", fields: [createdById], references: [id])
+  user               User               @relation("CreatedBy", fields: [createdById], references: [id])
   createdById        Int
-  customer           Customer  @relation(fields: [customerId], references: [id])
+  customer           Customer           @relation(fields: [customerId], references: [id])
   customerId         Int
   observation        String?
   resolvedAt         DateTime?
-  resolvedBy         User?     @relation("ResolvedBy", fields: [resolvedById], references: [id])
+  resolvedBy         User?              @relation("ResolvedBy", fields: [resolvedById], references: [id])
   resolvedById       Int?
-  isSynced           Boolean   @default(false)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  isSynced           Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  pictures           CallSheetPicture[]
+}
+
+model CallSheetPicture {
+  id          Int       @id @default(autoincrement())
+  callSheetId Int
+  url         String
+  callSheet   CallSheet @relation(fields: [callSheetId], references: [id])
 }

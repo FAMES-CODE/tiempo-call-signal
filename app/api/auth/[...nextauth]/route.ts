@@ -82,12 +82,21 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: any }) {
+    async jwt({
+      token,
+      user,
+      trigger,
+      session,
+    }: {
+      token: JWT;
+      user?: import("next-auth").User | undefined;
+      trigger?: "signIn" | "signUp" | "update";
+      session?: { mustChangePassword?: boolean } | null;
+    }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
 
-        // Fetch full user data from DB
         const dbUser = await prisma.user.findUnique({
           where: { id: Number(user.id) },
           omit: { password: true },
@@ -96,8 +105,13 @@ export const authOptions = {
         if (dbUser) {
           token.username = dbUser.username;
           token.role = dbUser.role;
-          // add any other fields you need
+          token.mustChangePassword = dbUser.mustChangePassword;
+        } else {
+          token.mustChangePassword = Boolean(user.mustChangePassword);
         }
+      }
+      if (trigger === "update" && session?.mustChangePassword === false) {
+        token.mustChangePassword = false;
       }
       return token;
     },
@@ -108,6 +122,7 @@ export const authOptions = {
           id: token.id as string,
           username: token.username as string,
           role: token.role as string,
+          mustChangePassword: Boolean(token.mustChangePassword),
         },
       };
     },

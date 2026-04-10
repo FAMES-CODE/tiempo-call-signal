@@ -9,7 +9,7 @@ export async function FirebirdToSQLiteSync() {
   console.log("Syncing customers from Firebird to SQLite...");
   try {
     const response = await fetch(
-      process.env.NEXT_PUBLIC_API_BASE_URL + "/api/firebird/getcustomers",
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/firebird/getcustomers`,
       {
         method: "GET",
       },

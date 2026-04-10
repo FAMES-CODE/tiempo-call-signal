@@ -36,6 +36,7 @@ type Customer = {
   CLIENT: string;
   CODE_CLIENT: string;
   CONTACT: string | null;
+  SOLDE: string | number;
   TEL: string | null;
   EMAIL: string | null;
   ADRESSE: string | null;
@@ -110,7 +111,7 @@ function Page() {
       ),
     [customers],
   );
-
+  console.log(customers);
   return (
     <div className="p-4 space-y-6">
       <div className="flex flex-col gap-2">
@@ -259,6 +260,10 @@ function Page() {
                                       <InfoItem
                                         label="Email"
                                         value={selectedCustomer.EMAIL || "-"}
+                                      />
+                                      <InfoItem
+                                        label="Solde"
+                                        value={String(selectedCustomer.SOLDE ?? 0) || "-"}
                                       />
                                       <InfoItem
                                         label="Location"

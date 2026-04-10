@@ -3,13 +3,42 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   (req) => {
-    // If user is authenticated and trying to access login page (/), redirect to dashboard
-    if (req.nextUrl.pathname === "/" && req.nextauth.token) {
+    const token = req.nextauth.token;
+    const path = req.nextUrl.pathname;
+    const mustChangePassword = Boolean(token?.mustChangePassword);
+    const isChangePasswordPage = path === "/change-password";
+    const isApiRoute = path.startsWith("/api/");
+
+    if (mustChangePassword && !isChangePasswordPage) {
+      if (isApiRoute) {
+        return NextResponse.json(
+          { error: "Password change required" },
+          { status: 403 },
+        );
+      }
+      return NextResponse.redirect(new URL("/change-password", req.url));
+    }
+
+    if (!mustChangePassword && isChangePasswordPage) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    // If user is authenticated and trying to access register, redirect to dashboard
-    if (req.nextUrl.pathname === "/register" && req.nextauth.token) {
+    const isAdminRoute =
+      path.startsWith("/dashboard/admin") || path.startsWith("/api/admin");
+    const role = token?.role;
+
+    // If user is authenticated and trying to access login page (/), redirect
+    if (path === "/" && token) {
+      const dest = mustChangePassword ? "/change-password" : "/dashboard";
+      return NextResponse.redirect(new URL(dest, req.url));
+    }
+
+    if (path === "/register" && token) {
+      const dest = mustChangePassword ? "/change-password" : "/dashboard";
+      return NextResponse.redirect(new URL(dest, req.url));
+    }
+
+    if (isAdminRoute && role !== "admin") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 

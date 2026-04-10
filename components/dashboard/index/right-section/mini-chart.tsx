@@ -31,7 +31,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function MiniChart() {
   const { data, error } = useSWR<StatsResponse>(
-    process.env.NEXT_PUBLIC_API_BASE_URL + "/api/stats",
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/stats`,
     fetcher,
     { refreshInterval: 10000 },
   );

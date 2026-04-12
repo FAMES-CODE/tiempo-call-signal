@@ -81,7 +81,7 @@ export async function createBon1ForCallSheet(
   await firebirdQuery(
     "INSERT INTO bon1 (num_bon, date_bon, heure, code_client, ref_bon, autre_info, blocage, jrnl, utilisateur, mode_rg, REMISE, TOT_REMISE) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
     [
-      numBon,
+      `APP_${numBon}`,
       now,
       formatHeure(now),
       input.codeClient,

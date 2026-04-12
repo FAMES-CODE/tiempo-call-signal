@@ -14,11 +14,15 @@ import {
 import {
   CheckCircle2,
   CircleDashed,
+  ImageIcon,
   Loader2,
   Phone,
   RefreshCw,
   Search,
   SlidersHorizontal,
+  Trash2,
+  Upload,
+  X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -127,6 +131,76 @@ function CallDetailsDialog({
   const [pvHtAr, setPvHtAr] = React.useState<number>(0);
   const canResolve = row.status === "pending";
   const canSyncBon = row.status === "resolved" && !row.isSynced;
+  
+
+  // Pictures
+  type Picture = { id: number; url: string; callSheetId: number };
+  const [pictures, setPictures] = React.useState<Picture[]>([]);
+  const [loadingPictures, setLoadingPictures] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const [uploadError, setUploadError] = React.useState<string>("");
+  const [deletingId, setDeletingId] = React.useState<number | null>(null);
+  const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const fetchPictures = React.useCallback(async () => {
+    setLoadingPictures(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets/${row.id}/pictures`,
+      );
+      if (res.ok) setPictures(await res.json());
+    } finally {
+      setLoadingPictures(false);
+    }
+  }, [row.id]);
+
+  React.useEffect(() => {
+    if (open) void fetchPictures();
+  }, [open, fetchPictures]);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    setUploadError("");
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((f) => formData.append("files", f));
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets/${row.id}/pictures`,
+        { method: "POST", body: formData },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setUploadError((data?.error as string) ?? "Upload failed");
+        return;
+      }
+      await fetchPictures();
+    } catch {
+      setUploadError("Upload failed — network error");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeletePicture = async (pictureId: number) => {
+    setDeletingId(pictureId);
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets/${row.id}/pictures`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pictureId }),
+        },
+      );
+      setPictures((prev) => prev.filter((p) => p.id !== pictureId));
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const handleResolve = async () => {
     if (!currentUserId) return;
@@ -273,12 +347,110 @@ function CallDetailsDialog({
               <dd className="mt-0.5">{row.user.username}</dd>
             </div>
           </dl>
-          <div className="rounded-lg border bg-muted/20 p-3">
-            <h1 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Add pictures
-            </h1>
-            <Input type="file" multiple accept="image/*" disabled />
+          {/* ── Pictures ────────────────────────────────────── */}
+          <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <ImageIcon className="size-3.5" />
+                Pictures
+                {pictures.length > 0 && (
+                  <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
+                    {pictures.length}
+                  </span>
+                )}
+              </h2>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploading ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Upload className="size-3.5" />
+                )}
+                {uploading ? "Uploading…" : "Add"}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={handleUpload}
+              />
+            </div>
+
+            {uploadError && (
+              <p className="text-xs text-destructive">{uploadError}</p>
+            )}
+
+            {loadingPictures ? (
+              <div className="flex items-center justify-center py-4 text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+              </div>
+            ) : pictures.length === 0 ? (
+              <p className="py-2 text-center text-xs text-muted-foreground">
+                No pictures yet.
+              </p>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {pictures.map((pic) => (
+                  <div
+                    key={pic.id}
+                    className="group relative aspect-square overflow-hidden rounded-md border bg-muted"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={pic.url}
+                      alt=""
+                      className="size-full object-cover cursor-pointer transition-opacity group-hover:opacity-80"
+                      onClick={() => setLightboxUrl(pic.url)}
+                    />
+                    <button
+                      type="button"
+                      aria-label="Delete picture"
+                      className="absolute right-1 top-1 hidden rounded-full bg-background/80 p-0.5 text-destructive shadow group-hover:flex items-center justify-center"
+                      disabled={deletingId === pic.id}
+                      onClick={() => void handleDeletePicture(pic.id)}
+                    >
+                      {deletingId === pic.id ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-3" />
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* ── Lightbox ─────────────────────────────────────── */}
+          {lightboxUrl && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+              onClick={() => setLightboxUrl(null)}
+            >
+              <button
+                type="button"
+                className="absolute right-4 top-4 rounded-full bg-background/20 p-1.5 text-white"
+                onClick={() => setLightboxUrl(null)}
+              >
+                <X className="size-5" />
+              </button>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={lightboxUrl}
+                alt=""
+                className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
           <div className="grid gap-2">
             <div className="rounded-lg border bg-muted/20 p-3">
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">

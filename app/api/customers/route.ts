@@ -14,6 +14,17 @@ export async function GET() {
             status: true,
             problemType: true,
             createdAt: true,
+            rate: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+            resolvedBy: {
+              select: {
+                username: true,
+              },
+            },
           },
           orderBy: {
             createdAt: "desc",

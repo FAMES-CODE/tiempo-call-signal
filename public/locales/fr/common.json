@@ -1,0 +1,29 @@
+{
+  "common": {
+    "hello": "Bonjour",
+    "world": "le monde",
+    "brand": "Tiempo Call Signal",
+    "login": {
+      "title": "Connectez-vous a votre compte",
+      "subtitle": "Entrez votre nom d'utilisateur ci-dessous pour vous connecter",
+      "usernameLabel": "Nom d'utilisateur",
+      "usernamePlaceholder": "votre-identifiant",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "votre-mot-de-passe",
+      "forgotPassword": "Mot de passe oublie ?",
+      "submit": "Connexion",
+      "loggingIn": "Connexion en cours...",
+      "messages": {
+        "requiredFields": "Veuillez remplir tous les champs obligatoires.",
+        "invalidCredentials": "Nom d'utilisateur ou mot de passe invalide",
+        "loginFailed": "La connexion a echoue. Veuillez reessayer.",
+        "loginSuccess": "Connexion reussie !",
+        "loginError": "Une erreur est survenue pendant la connexion. Veuillez reessayer."
+      }
+    }
+  },
+  "home": {
+    "title": "Accueil",
+    "description": "Bienvenue sur la page d'accueil"
+  }
+}

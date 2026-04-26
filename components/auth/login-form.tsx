@@ -10,9 +10,11 @@ import { toast } from "react-toastify";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
   const router = useRouter();
+  const { t } = useTranslation("common");
   const {
     register,
     handleSubmit,
@@ -30,7 +32,7 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
   const onSubmit: SubmitHandler<LoginSchema> = async (data) => {
     const { username, password } = data;
     if (!username || !password) {
-      notify("Please fill in all required fields.", "error");
+      notify(t("common.login.messages.requiredFields"), "error");
       return;
     }
 
@@ -48,24 +50,24 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
       if (response?.error) {
         notify(
           response.error === "CredentialsSignin"
-            ? "Invalid username or password"
-            : response.error || "Login failed. Please try again.",
+            ? t("common.login.messages.invalidCredentials")
+            : response.error || t("common.login.messages.loginFailed"),
           "error",
         );
 
         setIsSubmitting(false);
       } else if (response?.ok) {
-        notify("Login successful!", "success");
+        notify(t("common.login.messages.loginSuccess"), "success");
         setTimeout(() => {
           router.push("/dashboard");
         }, 1500);
       } else {
-        notify("Login failed. Please try again.", "error");
+        notify(t("common.login.messages.loginFailed"), "error");
         setIsSubmitting(false);
       }
     } catch (error) {
       console.error("Login error:", error);
-      notify("An error occurred during login. Please try again.", "error");
+      notify(t("common.login.messages.loginError"), "error");
       setIsSubmitting(false);
     }
   };
@@ -77,42 +79,42 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
     >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Login to your account</h1>
+          <h1 className="text-2xl font-bold">{t("common.login.title")}</h1>
           <p className="text-muted-foreground text-sm text-balance">
-            Enter your username below to login to your account
+            {t("common.login.subtitle")}
           </p>
         </div>
         <Field>
-          <FieldLabel htmlFor="username">Username</FieldLabel>
+          <FieldLabel htmlFor="username">{t("common.login.usernameLabel")}</FieldLabel>
           <Input
             id="username"
             type="text"
-            placeholder="your-username"
+            placeholder={t("common.login.usernamePlaceholder")}
             {...register("username")}
             required
           />
         </Field>
         <Field>
           <div className="flex items-center">
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <FieldLabel htmlFor="password">{t("common.login.passwordLabel")}</FieldLabel>
             <a
               href="#"
               className="ml-auto text-sm underline-offset-4 hover:underline"
             >
-              Forgot your password?
+              {t("common.login.forgotPassword")}
             </a>
           </div>
           <Input
             id="password"
             type="password"
-            placeholder="your-password"
+            placeholder={t("common.login.passwordPlaceholder")}
             {...register("password")}
             required
           />
         </Field>
         <Field>
           <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? "Logging in..." : "Login"}
+            {isSubmitting ? t("common.login.loggingIn") : t("common.login.submit")}
           </Button>
         </Field>
       </FieldGroup>

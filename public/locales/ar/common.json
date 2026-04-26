@@ -1,0 +1,29 @@
+{
+  "common": {
+    "hello": "مرحبا",
+    "world": "العالم",
+    "brand": "Tiempo Call Signal",
+    "login": {
+      "title": "سجل الدخول إلى حسابك",
+      "subtitle": "أدخل اسم المستخدم أدناه لتسجيل الدخول إلى حسابك",
+      "usernameLabel": "اسم المستخدم",
+      "usernamePlaceholder": "اسم-المستخدم",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "كلمة-المرور",
+      "forgotPassword": "هل نسيت كلمة المرور؟",
+      "submit": "تسجيل الدخول",
+      "loggingIn": "جار تسجيل الدخول...",
+      "messages": {
+        "requiredFields": "يرجى ملء جميع الحقول المطلوبة.",
+        "invalidCredentials": "اسم المستخدم أو كلمة المرور غير صحيحة",
+        "loginFailed": "فشل تسجيل الدخول. حاول مرة أخرى.",
+        "loginSuccess": "تم تسجيل الدخول بنجاح!",
+        "loginError": "حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى."
+      }
+    }
+  },
+  "home": {
+    "title": "الرئيسية",
+    "description": "مرحبا بك في الصفحة الرئيسية"
+  }
+}

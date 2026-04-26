@@ -1,10 +1,26 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { createProxy } from "next-i18next/proxy";
+import i18nConfig from "./i18n.config";
+
+export const proxy = createProxy(i18nConfig);
+
+function stripLocaleFromPath(path: string) {
+  const segments = path.split("/");
+  const maybeLocale = segments[1];
+
+  if (i18nConfig.supportedLngs.includes(maybeLocale)) {
+    const stripped = `/${segments.slice(2).join("/")}`;
+    return stripped === "/" ? stripped : stripped.replace(/\/$/, "");
+  }
+
+  return path === "/" ? path : path.replace(/\/$/, "");
+}
 
 export default withAuth(
   (req) => {
     const token = req.nextauth.token;
-    const path = req.nextUrl.pathname;
+    const path = stripLocaleFromPath(req.nextUrl.pathname);
     const mustChangePassword = Boolean(token?.mustChangePassword);
     const isChangePasswordPage = path === "/change-password";
     const isApiRoute = path.startsWith("/api/");
@@ -47,8 +63,9 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
+        const path = stripLocaleFromPath(req.nextUrl.pathname);
         // Allow access to login page (/) and register page even without token
-        if (req.nextUrl.pathname === "/" || req.nextUrl.pathname === "/register") {
+        if (path === "/" || path === "/register") {
           return true;
         }
         // Require token for all other routes
@@ -71,6 +88,7 @@ export const config = {
      * - favicon.ico (favicon file)
      */
     "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|assets|favicon.ico|sw.js|site.webmanifest).*)",
   ],
 };
 

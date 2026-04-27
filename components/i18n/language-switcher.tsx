@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Select,
@@ -34,12 +33,12 @@ function replaceLocaleInPath(pathname: string, locale: string) {
 export default function LanguageSwitcher() {
   const pathname = usePathname();
   const router = useRouter();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation("common");
   const currentLocale = i18n.language;
   return (
     <Select value={currentLocale}>
       <SelectTrigger>
-        <SelectValue placeholder="Language" />
+        <SelectValue placeholder={t("common.languageSwitcher.placeholder")} />
       </SelectTrigger>
       <SelectContent className="flex items-center gap-2">
         <SelectGroup>

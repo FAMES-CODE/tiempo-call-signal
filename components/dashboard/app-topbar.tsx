@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Bell, ChevronRight, LogOut, Settings, User } from "lucide-react";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ModeToggle } from "@/components/mode-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,30 +23,50 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { getLocalePrefixFromPathname, withLocalePath } from "@/lib/locale-path";
+import LanguageSwitcher from "../i18n/language-switcher";
 
-const ROUTE_TITLES: Record<string, string> = {
-  "/dashboard": "Overview",
-  "/dashboard/customers": "Customers",
-  "/dashboard/calls": "Calls",
-  "/dashboard/admin": "Administration",
+const ROUTE_TITLE_KEYS: Record<string, string> = {
+  "/dashboard": "common.dashboard.nav.overview",
+  "/dashboard/customers": "common.dashboard.nav.customers",
+  "/dashboard/calls": "common.dashboard.nav.calls",
+  "/dashboard/admin": "common.dashboard.nav.administration",
 };
 
-function getBreadcrumb(pathname: string) {
-  const normalized = pathname || "/dashboard";
-  if (normalized === "/dashboard") {
-    return [{ label: ROUTE_TITLES["/dashboard"], href: "/dashboard" }];
+function getBreadcrumb(pathname: string, t: (key: string) => string) {
+  const localePrefix = getLocalePrefixFromPathname(pathname);
+  const withoutLocale = localePrefix
+    ? pathname.replace(new RegExp(`^${localePrefix}`), "") || "/dashboard"
+    : pathname || "/dashboard";
+  const normalized = withoutLocale.startsWith("/")
+    ? withoutLocale
+    : `/${withoutLocale}`;
+  const base = normalized.startsWith("/dashboard") ? normalized : "/dashboard";
+
+  if (base === "/dashboard") {
+    return [
+      {
+        label: t(ROUTE_TITLE_KEYS["/dashboard"]),
+        href: withLocalePath(localePrefix, "/dashboard"),
+      },
+    ];
   }
   const crumbs: { label: string; href: string }[] = [
-    { label: ROUTE_TITLES["/dashboard"], href: "/dashboard" },
+    {
+      label: t(ROUTE_TITLE_KEYS["/dashboard"]),
+      href: withLocalePath(localePrefix, "/dashboard"),
+    },
   ];
-  const rest = normalized.replace("/dashboard", "") || "";
+  const rest = base.replace("/dashboard", "") || "";
   const segments = rest.split("/").filter(Boolean);
   let acc = "/dashboard";
   for (const segment of segments) {
     acc += `/${segment}`;
-    const title =
-      ROUTE_TITLES[acc] ?? segment.charAt(0).toUpperCase() + segment.slice(1);
-    crumbs.push({ label: title, href: acc });
+    const titleKey = ROUTE_TITLE_KEYS[acc];
+    const label = titleKey
+      ? t(titleKey)
+      : segment.charAt(0).toUpperCase() + segment.slice(1);
+    crumbs.push({ label, href: withLocalePath(localePrefix, acc) });
   }
   return crumbs;
 }
@@ -61,8 +83,17 @@ function AppTopbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
-  const crumbs = getBreadcrumb(pathname ?? "/dashboard");
+  const { t } = useTranslation("common");
+  const localePrefix = getLocalePrefixFromPathname(pathname ?? "");
+  const crumbs = useMemo(
+    () => getBreadcrumb(pathname ?? "/dashboard", t),
+    [pathname, t],
+  );
   const username = session?.user?.username ?? "User";
+  const roleLabel =
+    session?.user?.role === "admin"
+      ? t("common.dashboard.topbar.roleAdmin")
+      : t("common.dashboard.topbar.roleUser");
 
   return (
     <header
@@ -74,10 +105,7 @@ function AppTopbar() {
       <div className="flex h-14 items-center gap-2 px-3 md:h-16 md:gap-4 md:px-4">
         <SidebarTrigger className="-ml-1" />
 
-        <Separator
-          orientation="vertical"
-          className="mr-1 hidden  md:block"
-        />
+        <Separator orientation="vertical" className="mr-1 hidden  md:block" />
 
         <nav
           className="hidden min-w-0 flex-1 items-center gap-1 text-sm text-muted-foreground md:flex"
@@ -110,11 +138,11 @@ function AppTopbar() {
         <div className="relative flex min-w-0 flex-1 md:max-w-md md:flex-initial lg:max-w-lg">
           <Input
             type="search"
-            placeholder="Search calls, customers…"
+            placeholder={t("common.dashboard.topbar.searchPlaceholder")}
             className="h-9 w-full pl-3 md:bg-muted/50"
-            aria-label="Search"
+            aria-label={t("common.dashboard.topbar.searchAria")}
             readOnly
-            title="Search will be available in a future update"
+            title={t("common.dashboard.topbar.searchTitle")}
           />
         </div>
 
@@ -124,9 +152,9 @@ function AppTopbar() {
             variant="ghost"
             size="icon-sm"
             className="hidden sm:inline-flex"
-            aria-label="Notifications"
+            aria-label={t("common.dashboard.topbar.notificationsAria")}
             disabled
-            title="No new notifications"
+            title={t("common.dashboard.topbar.notificationsTitle")}
           >
             <Bell className="size-4" />
           </Button>
@@ -151,30 +179,41 @@ function AppTopbar() {
                     <div className="flex flex-col gap-0.5">
                       <span className="text-sm font-medium">{username}</span>
                       <span className="text-xs text-muted-foreground">
-                        {session?.user?.role ?? "user"}
+                        {session?.user?.role === "admin" ||
+                        session?.user?.role === "user"
+                          ? roleLabel
+                          : (session?.user?.role ?? roleLabel)}
                       </span>
                     </div>
                   </DropdownMenuLabel>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => router.push("/dashboard")}>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      router.push(withLocalePath(localePrefix, "/dashboard"))
+                    }
+                  >
                     <User className="size-4" />
-                    Overview
+                    {t("common.dashboard.topbar.overview")}
                   </DropdownMenuItem>
                   <DropdownMenuItem disabled className="opacity-60">
                     <Settings className="size-4" />
-                    Settings
+                    {t("common.dashboard.topbar.settings")}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
                     variant="destructive"
-                    onClick={() => signOut({ callbackUrl: "/" })}
+                    onClick={() =>
+                      signOut({
+                        callbackUrl: withLocalePath(localePrefix, "/"),
+                      })
+                    }
                   >
                     <LogOut className="size-4" />
-                    Sign out
+                    {t("common.dashboard.topbar.signOut")}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
@@ -184,6 +223,9 @@ function AppTopbar() {
               <AvatarFallback className="text-xs">?</AvatarFallback>
             </Avatar>
           )}
+        </div>
+        <div className="ml-auto">
+          <LanguageSwitcher />
         </div>
       </div>
     </header>

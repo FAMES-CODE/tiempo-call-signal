@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslation } from "react-i18next";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,21 +22,25 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { RegisterSchema } from "@/lib/schemas/authSchema";
-import type { RegisterSchema as RegisterSchemaType } from "@/lib/schemas/authSchema";
-import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
+import {
+  createRegisterSchema,
+  type RegisterFormValues,
+} from "@/lib/schemas/authSchema";
+import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
+import { cn } from "@/lib/utils";
 
 function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
+  const { t } = useTranslation("common");
+  const prefix = useLocalePrefix();
+  const registerSchema = useMemo(() => createRegisterSchema(t), [t]);
+
   const {
     register,
     handleSubmit,
-    watch,
     reset,
     formState: { errors },
-  } = useForm<RegisterSchemaType>({
-    resolver: zodResolver(RegisterSchema),
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
   });
 
   const notify = (message: string, type: "success" | "error" | "info") => {
@@ -39,16 +48,16 @@ function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmitForm = async (data: RegisterSchemaType) => {
+  const handleSubmitForm = async (data: RegisterFormValues) => {
     const { username, password, confirmPassword } = data;
 
     if (password !== confirmPassword) {
-      notify("Passwords do not match", "error");
+      notify(t("common.register.messages.passwordsMismatch"), "error");
       return;
     }
 
     if (!username || !password || !confirmPassword) {
-      notify("Please fill in all the required fields.", "error");
+      notify(t("common.register.messages.requiredFields"), "error");
       return;
     }
 
@@ -61,16 +70,20 @@ function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
         body: JSON.stringify({ username, password, confirmPassword }),
       });
 
-      const data = await response.json();
+      const body = await response.json();
 
       if (response.ok) {
-        notify("Registration successful", "success");
+        notify(t("common.register.messages.success"), "success");
         reset();
       } else {
-        notify(data?.message ?? "Registration failed", "error");
+        notify(
+          typeof body?.message === "string" ? body.message : t("common.register.messages.failed"),
+          "error",
+        );
       }
-    } catch (error: any) {
-      notify(error?.message ?? "An unexpected error occurred", "error");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : t("common.register.messages.unexpected");
+      notify(message, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -79,20 +92,18 @@ function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Create your account</CardTitle>
-          <CardDescription>
-            Enter your username below to create your account
-          </CardDescription>
+          <CardTitle className="text-xl">{t("common.register.title")}</CardTitle>
+          <CardDescription>{t("common.register.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="name">Username</FieldLabel>
+                <FieldLabel htmlFor="name">{t("common.register.usernameLabel")}</FieldLabel>
                 <Input
                   id="name"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder={t("common.register.usernamePlaceholder")}
                   required
                   {...register("username")}
                 />
@@ -100,17 +111,12 @@ function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      {...register("password")}
-                    />
+                    <FieldLabel htmlFor="password">{t("common.register.passwordLabel")}</FieldLabel>
+                    <Input id="password" type="password" required {...register("password")} />
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="confirm-password">
-                      Confirm Password
+                      {t("common.register.confirmPasswordLabel")}
                     </FieldLabel>
                     <Input
                       id="confirm-password"
@@ -123,16 +129,17 @@ function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
                     />
                   </Field>
                 </Field>
-                <FieldDescription>
-                  Must be at least 8 characters long.
-                </FieldDescription>
+                <FieldDescription>{t("common.register.passwordHint")}</FieldDescription>
               </Field>
               <Field>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Create Account"}
+                  {isSubmitting ? t("common.register.submitting") : t("common.register.submit")}
                 </Button>
                 <FieldDescription className="text-center">
-                  Already have an account? <a href="#">Sign in</a>
+                  {t("common.register.signInPrompt")}{" "}
+                  <Link href={withLocalePath(prefix, "/")} className="underline underline-offset-4">
+                    {t("common.register.signInLink")}
+                  </Link>
                 </FieldDescription>
               </Field>
             </FieldGroup>

@@ -3,19 +3,12 @@
 import type { ComponentType } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Headphones,
-  Home,
-  LayoutDashboard,
-  PhoneCall,
-  Settings2,
-  Users,
-} from "lucide-react";
+import { Home, LayoutDashboard, PhoneCall, Settings2, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -23,57 +16,53 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
 
 type NavItem = {
-  title: string;
+  titleKey: string;
   url: string;
   icon: ComponentType<{ className?: string }>;
 };
 
 const mainNav: NavItem[] = [
   {
-    title: "Overview",
+    titleKey: "common.dashboard.nav.overview",
     url: "/dashboard",
     icon: Home,
   },
   {
-    title: "Calls",
+    titleKey: "common.dashboard.nav.calls",
     url: "/dashboard/calls",
     icon: PhoneCall,
   },
   {
-    title: "Customers",
+    titleKey: "common.dashboard.nav.customers",
     url: "/dashboard/customers",
     icon: Users,
   },
 ];
 
-const systemNav: NavItem[] = [
-  {
-    title: "Administration",
-    url: "/dashboard/admin",
-    icon: Settings2,
-  },
-];
-
-function isNavActive(pathname: string, url: string) {
-  if (url === "/dashboard") {
-    return pathname === "/dashboard";
+function isNavActive(pathname: string, href: string) {
+  const path = pathname.replace(/\/$/, "") || "/";
+  const target = href.replace(/\/$/, "") || "/";
+  if (target.endsWith("/dashboard") && !target.includes("/dashboard/")) {
+    return path === target;
   }
-  return pathname === url || pathname.startsWith(`${url}/`);
+  return path === target || path.startsWith(`${target}/`);
 }
 
 function AppSidebar() {
   const pathname = usePathname() ?? "/dashboard";
   const { data: session, status } = useSession();
+  const { t } = useTranslation("common");
+  const prefix = useLocalePrefix();
 
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return <div>{t("common.dashboard.nav.loading")}</div>;
   }
 
   return (
@@ -86,12 +75,12 @@ function AppSidebar() {
               className="data-[active=true]:bg-sidebar-accent"
               render={
                 <Link
-                  href="/dashboard"
-                  aria-label="Tiempo Call Signal home"
-                  title="Tiempo Call Signal"
+                  href={withLocalePath(prefix, "/dashboard")}
+                  aria-label={t("common.dashboard.nav.homeAria")}
+                  title={t("common.dashboard.nav.homeTitle")}
                 />
               }
-              isActive={pathname === "/dashboard"}
+              isActive={isNavActive(pathname, withLocalePath(prefix, "/dashboard"))}
             >
               <div
                 className={cn(
@@ -102,11 +91,9 @@ function AppSidebar() {
                 <LayoutDashboard className="size-4" aria-hidden />
               </div>
               <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
-                  Tiempo Call Signal
-                </span>
+                <span className="truncate font-semibold">{t("common.dashboard.nav.homeTitle")}</span>
                 <span className="truncate text-xs text-muted-foreground">
-                  Support workspace
+                  {t("common.dashboard.nav.supportWorkspace")}
                 </span>
               </div>
             </SidebarMenuButton>
@@ -116,22 +103,24 @@ function AppSidebar() {
 
       <SidebarContent className="gap-0">
         <SidebarGroup>
-          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("common.dashboard.nav.workspace")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNav.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton
-                    render={
-                      <Link href={item.url} title={item.title} prefetch />
-                    }
-                    isActive={isNavActive(pathname, item.url)}
-                  >
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {mainNav.map((item) => {
+                const href = withLocalePath(prefix, item.url);
+                const title = t(item.titleKey);
+                return (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton
+                      render={<Link href={href} title={title} prefetch />}
+                      isActive={isNavActive(pathname, href)}
+                    >
+                      <item.icon />
+                      <span>{title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -142,22 +131,22 @@ function AppSidebar() {
           <>
             {session.user.role === "admin" && (
               <SidebarGroup>
-                <SidebarGroupLabel>System</SidebarGroupLabel>
+                <SidebarGroupLabel>{t("common.dashboard.nav.system")}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     <SidebarMenuItem key="admin">
                       <SidebarMenuButton
                         render={
                           <Link
-                            href="/dashboard/admin"
-                            title="Administration"
+                            href={withLocalePath(prefix, "/dashboard/admin")}
+                            title={t("common.dashboard.nav.administration")}
                             prefetch
                           />
                         }
-                        isActive={isNavActive(pathname, "/dashboard/admin")}
+                        isActive={isNavActive(pathname, withLocalePath(prefix, "/dashboard/admin"))}
                       >
                         <Settings2 />
-                        <span>Administration</span>
+                        <span>{t("common.dashboard.nav.administration")}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   </SidebarMenu>

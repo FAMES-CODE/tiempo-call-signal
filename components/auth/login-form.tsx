@@ -9,11 +9,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+
+import { withLocalePath, getLocalePrefixFromPathname } from "@/lib/locale-path";
 
 function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
   const router = useRouter();
+  const pathname = usePathname() ?? "";
+  const localePrefix = getLocalePrefixFromPathname(pathname);
   const { t } = useTranslation("common");
   const {
     register,
@@ -59,7 +63,7 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
       } else if (response?.ok) {
         notify(t("common.login.messages.loginSuccess"), "success");
         setTimeout(() => {
-          router.push("/dashboard");
+          router.push(withLocalePath(localePrefix, "/dashboard"));
         }, 1500);
       } else {
         notify(t("common.login.messages.loginFailed"), "error");

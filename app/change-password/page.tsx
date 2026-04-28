@@ -1,43 +1,50 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as React from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  ChangePasswordSchema,
-  type ChangePasswordFormValues,
+  createChangePasswordFormSchema,
+  type ChangePasswordFormValuesI18n,
 } from "@/lib/schemas/authSchema";
+import { getLocalePrefixFromPathname, withLocalePath } from "@/lib/locale-path";
 import { cn } from "@/lib/utils";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const pathname = usePathname() ?? "";
+  const localePrefix = getLocalePrefixFromPathname(pathname);
+  const { t } = useTranslation("common");
   const { data: session, status, update } = useSession();
   const [submitting, setSubmitting] = React.useState(false);
+
+  const changePasswordSchema = React.useMemo(() => createChangePasswordFormSchema(t), [t]);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<ChangePasswordFormValues>({
-    resolver: zodResolver(ChangePasswordSchema),
+  } = useForm<ChangePasswordFormValuesI18n>({
+    resolver: zodResolver(changePasswordSchema),
   });
 
   React.useEffect(() => {
     if (status === "unauthenticated") {
-      router.replace("/");
+      router.replace(withLocalePath(localePrefix, "/"));
     } else if (status === "authenticated" && !session?.user?.mustChangePassword) {
-      router.replace("/dashboard");
+      router.replace(withLocalePath(localePrefix, "/dashboard"));
     }
-  }, [status, session?.user?.mustChangePassword, router]);
+  }, [status, session?.user?.mustChangePassword, router, localePrefix]);
 
-  const onSubmit: SubmitHandler<ChangePasswordFormValues> = async (data) => {
+  const onSubmit: SubmitHandler<ChangePasswordFormValuesI18n> = async (data) => {
     setSubmitting(true);
     try {
       const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/auth/change-password", {
@@ -48,16 +55,16 @@ export default function ChangePasswordPage() {
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
         toast.error(
-          typeof payload.error === "string" ? payload.error : "Failed to change password",
+          typeof payload.error === "string" ? payload.error : t("common.changePassword.toastFailed"),
         );
         return;
       }
       await update({ mustChangePassword: false });
-      toast.success("Password updated");
-      router.push("/dashboard");
+      toast.success(t("common.changePassword.toastSuccess"));
+      router.push(withLocalePath(localePrefix, "/dashboard"));
       router.refresh();
     } catch {
-      toast.error("Network error");
+      toast.error(t("common.changePassword.toastNetwork"));
     } finally {
       setSubmitting(false);
     }
@@ -66,7 +73,7 @@ export default function ChangePasswordPage() {
   if (status === "loading" || status === "unauthenticated") {
     return (
       <div className="flex min-h-svh items-center justify-center text-muted-foreground">
-        Loading…
+        {t("common.changePassword.loading")}
       </div>
     );
   }
@@ -83,13 +90,13 @@ export default function ChangePasswordPage() {
       >
         <FieldGroup>
           <div className="flex flex-col items-center gap-1 text-center">
-            <h1 className="text-2xl font-bold">Change password</h1>
+            <h1 className="text-2xl font-bold">{t("common.changePassword.title")}</h1>
             <p className="text-sm text-muted-foreground text-balance">
-              Your administrator requires you to set a new password before accessing the application.
+              {t("common.changePassword.subtitle")}
             </p>
           </div>
           <Field>
-            <FieldLabel htmlFor="currentPassword">Current password</FieldLabel>
+            <FieldLabel htmlFor="currentPassword">{t("common.changePassword.currentPassword")}</FieldLabel>
             <Input
               id="currentPassword"
               type="password"
@@ -101,7 +108,7 @@ export default function ChangePasswordPage() {
             )}
           </Field>
           <Field>
-            <FieldLabel htmlFor="newPassword">New password</FieldLabel>
+            <FieldLabel htmlFor="newPassword">{t("common.changePassword.newPassword")}</FieldLabel>
             <Input
               id="newPassword"
               type="password"
@@ -113,7 +120,7 @@ export default function ChangePasswordPage() {
             )}
           </Field>
           <Field>
-            <FieldLabel htmlFor="confirmPassword">Confirm</FieldLabel>
+            <FieldLabel htmlFor="confirmPassword">{t("common.changePassword.confirm")}</FieldLabel>
             <Input
               id="confirmPassword"
               type="password"
@@ -125,7 +132,7 @@ export default function ChangePasswordPage() {
             )}
           </Field>
           <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? "Saving…" : "Save and continue"}
+            {submitting ? t("common.changePassword.saving") : t("common.changePassword.save")}
           </Button>
         </FieldGroup>
       </form>

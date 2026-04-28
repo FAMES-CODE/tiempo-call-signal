@@ -10,6 +10,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import SummaryCard from "@/components/dashboard/index/left-section/summary-card";
 import { MiniChart } from "@/components/dashboard/index/right-section/mini-chart";
@@ -23,18 +24,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
 
-function formatGreeting() {
+function formatGreeting(t: (key: string) => string) {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return t("common.dashboard.home.greetingMorning");
+  if (hour < 18) return t("common.dashboard.home.greetingAfternoon");
+  return t("common.dashboard.home.greetingEvening");
 }
 
 export default function DashboardHome() {
+  const { t, i18n } = useTranslation("common");
+  const prefix = useLocalePrefix();
   const { data: session, status } = useSession();
-  const username = session?.user?.username ?? "there";
-  const today = new Date().toLocaleDateString(undefined, {
+  const username = session?.user?.username ?? t("common.dashboard.home.there");
+  const locale = i18n.language?.split("-")[0] || "en";
+  const today = new Date().toLocaleDateString(locale, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -50,15 +55,14 @@ export default function DashboardHome() {
             <div className="inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
               <Sparkles className="size-3.5 text-primary" aria-hidden />
               {status === "loading"
-                ? "Loading session…"
-                : `${formatGreeting()}, ${username}`}
+                ? t("common.dashboard.home.loadingSession")
+                : `${formatGreeting(t)}, ${username}`}
             </div>
             <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Your support dashboard
+              {t("common.dashboard.home.heroTitle")}
             </h1>
             <p className="max-w-xl text-sm text-muted-foreground md:text-base">
-              Track calls you handle, follow up on pending cases, and keep
-              customers moving— all in one place.
+              {t("common.dashboard.home.heroDescription")}
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-1 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
@@ -67,7 +71,7 @@ export default function DashboardHome() {
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Clock className="size-4" aria-hidden />
-                {new Date().toLocaleTimeString(undefined, {
+                {new Date().toLocaleTimeString(locale, {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
@@ -76,18 +80,18 @@ export default function DashboardHome() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
-              href="/dashboard/calls"
+              href={withLocalePath(prefix, "/dashboard/calls")}
               className={buttonVariants({ variant: "default", size: "lg" })}
             >
-              View calls
+              {t("common.dashboard.home.viewCalls")}
               <ArrowRight className="size-4" />
             </Link>
             <Link
-              href="/dashboard/customers"
+              href={withLocalePath(prefix, "/dashboard/customers")}
               className={buttonVariants({ variant: "outline", size: "lg" })}
             >
               <Users className="size-4" />
-              Customers
+              {t("common.dashboard.home.customers")}
             </Link>
           </div>
         </div>
@@ -97,10 +101,10 @@ export default function DashboardHome() {
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">
-              Your activity
+              {t("common.dashboard.home.activityTitle")}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Numbers for calls you created and cases you resolved.
+              {t("common.dashboard.home.activitySubtitle")}
             </p>
           </div>
         </div>
@@ -115,10 +119,8 @@ export default function DashboardHome() {
         <div className="space-y-6 lg:col-span-5">
           <Card className="overflow-hidden border shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Call mix</CardTitle>
-              <CardDescription>
-                Resolved vs pending among your tracked calls.
-              </CardDescription>
+              <CardTitle className="text-base">{t("common.dashboard.home.callMixTitle")}</CardTitle>
+              <CardDescription>{t("common.dashboard.home.callMixDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <MiniChart />
@@ -127,12 +129,12 @@ export default function DashboardHome() {
 
           <Card className="border shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Shortcuts</CardTitle>
-              <CardDescription>Jump to common tasks.</CardDescription>
+              <CardTitle className="text-base">{t("common.dashboard.home.shortcutsTitle")}</CardTitle>
+              <CardDescription>{t("common.dashboard.home.shortcutsDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-2">
               <Link
-                href="/dashboard/calls"
+                href={withLocalePath(prefix, "/dashboard/calls")}
                 className={buttonVariants({
                   variant: "outline",
                   className: "h-auto justify-between py-3",
@@ -140,12 +142,12 @@ export default function DashboardHome() {
               >
                 <span className="flex items-center gap-2">
                   <Headphones className="size-4" />
-                  Open calls list
+                  {t("common.dashboard.home.openCallsList")}
                 </span>
                 <ArrowRight className="size-4 opacity-60" />
               </Link>
               <Link
-                href="/dashboard/customers"
+                href={withLocalePath(prefix, "/dashboard/customers")}
                 className={buttonVariants({
                   variant: "outline",
                   className: "h-auto justify-between py-3",
@@ -153,17 +155,17 @@ export default function DashboardHome() {
               >
                 <span className="flex items-center gap-2">
                   <Users className="size-4" />
-                  Browse customers
+                  {t("common.dashboard.home.browseCustomers")}
                 </span>
                 <ArrowRight className="size-4 opacity-60" />
               </Link>
               <Separator className="my-1" />
               <p className="text-xs text-muted-foreground">
-                Log a new case from the activity panel on the left using{" "}
+                {t("common.dashboard.home.shortcutHintBefore")}{" "}
                 <span className="font-medium text-foreground">
-                  New call sheet
+                  {t("common.dashboard.home.shortcutHintHighlight")}
                 </span>
-                .
+                {t("common.dashboard.home.shortcutHintAfter")}
               </p>
             </CardContent>
           </Card>

@@ -1,5 +1,7 @@
-import RegisterComponent from "@/components/auth/register-component";
+import RegisterComponent from '@/components/auth/register-component'
 
-export default function Page() {
-  return <RegisterComponent />;
+function Page() {
+  return <RegisterComponent />
 }
+
+export default Page

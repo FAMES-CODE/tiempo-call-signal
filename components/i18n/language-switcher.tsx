@@ -37,7 +37,7 @@ function replaceLocaleInPath(pathname: string, locale: string) {
 export default function LanguageSwitcher() {
   const pathname = usePathname();
   const router = useRouter();
-  const { i18n } = useTranslation("common");
+  const { i18n, t } = useTranslation("common");
   const currentLocale = i18n.language as Locale;
   const [open, setOpen] = useState(false);
 
@@ -51,12 +51,12 @@ export default function LanguageSwitcher() {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger>
         <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          aria-label="Select language"
+          aria-label={t("common.languageSwitcher.ariaLabel")}
           className={cn(
             "group h-9 gap-2 rounded-full border border-border/60 bg-background/80 px-3",
             "text-sm font-medium shadow-sm backdrop-blur-sm",
@@ -107,7 +107,7 @@ export default function LanguageSwitcher() {
         )}
       >
         <p className="px-2 pb-1.5 pt-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-          Language
+          {t("common.languageSwitcher.heading")}
         </p>
 
         <div className="flex flex-col gap-0.5">

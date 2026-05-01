@@ -2,7 +2,7 @@
   "common": {
     "hello": "Bonjour",
     "world": "le monde",
-    "brand": "Tiempo Call Signal",
+    "brand": "Tiempo Maintenance",
     "login": {
       "title": "Connectez-vous a votre compte",
       "subtitle": "Entrez votre nom d'utilisateur ci-dessous pour vous connecter",
@@ -77,8 +77,8 @@
         "workspace": "Espace de travail",
         "system": "Système",
         "supportWorkspace": "Espace support",
-        "homeAria": "Accueil Tiempo Call Signal",
-        "homeTitle": "Tiempo Call Signal",
+        "homeAria": "Accueil Tiempo Maintenance",
+        "homeTitle": "Tiempo Maintenance",
         "loading": "Chargement…"
       },
       "topbar": {

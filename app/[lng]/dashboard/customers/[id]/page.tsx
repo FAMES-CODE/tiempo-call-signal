@@ -202,10 +202,8 @@ function StatPill({
 
 function CallTimelineItem({
   call,
-  index,
 }: {
   call: CustomerCall;
-  index: number;
 }) {
   const { t } = useTranslation("common");
   const [expanded, setExpanded] = React.useState(false);
@@ -588,7 +586,7 @@ export default function CustomerDetailPage() {
           ) : (
             <div className="pt-1">
               {sortedCalls.map((call, i) => (
-                <CallTimelineItem key={call.id} call={call} index={i} />
+                <CallTimelineItem key={call.id} call={call} />
               ))}
             </div>
           )}

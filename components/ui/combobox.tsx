@@ -4,7 +4,7 @@ import * as React from "react"
 import { Combobox as ComboboxPrimitive } from "@base-ui/react"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import {
   InputGroup,
   InputGroupAddon,
@@ -241,8 +241,10 @@ function ComboboxChip({
       {children}
       {showRemove && (
         <ComboboxPrimitive.ChipRemove
-          render={<Button variant="ghost" size="icon-xs" />}
-          className="-ml-1 opacity-50 hover:opacity-100"
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "icon-xs" }),
+            "-ml-1 opacity-50 hover:opacity-100"
+          )}
           data-slot="combobox-chip-remove"
         >
           <XIcon className="pointer-events-none" />

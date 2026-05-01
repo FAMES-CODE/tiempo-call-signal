@@ -10,6 +10,11 @@ function getLocaleFromPath(path: string) {
   return i18nConfig.fallbackLng;
 }
 
+function hasLocalePrefix(path: string) {
+  const maybeLocale = path.split("/")[1];
+  return i18nConfig.supportedLngs.includes(maybeLocale);
+}
+
 function withLocale(path: string, locale: string) {
   if (path === "/") return `/${locale}`;
   return `/${locale}${path}`;
@@ -33,6 +38,11 @@ export const proxy = withAuth(
     const mustChangePassword = Boolean(token?.mustChangePassword);
     const isChangePasswordPage = path === "/change-password";
     const isApiRoute = path.startsWith("/api/");
+
+    // Enforce locale-prefixed routes: `/dashboard` -> `/<lng>/dashboard`
+    if (!isApiRoute && !hasLocalePrefix(req.nextUrl.pathname)) {
+      return NextResponse.redirect(new URL(withLocale(path, locale), req.url));
+    }
 
     if (mustChangePassword && !isChangePasswordPage) {
       if (isApiRoute) {

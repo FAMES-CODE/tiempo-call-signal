@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Label, Pie, PieChart } from "recharts";
 import useSWR from "swr";
+import { useTranslation } from "react-i18next";
 
 import {
   ChartContainer,
@@ -10,17 +11,6 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-
-const chartConfig = {
-  resolved: {
-    label: "Resolved",
-    color: "var(--chart-2)",
-  },
-  pending: {
-    label: "Pending",
-    color: "var(--color-destructive)",
-  },
-} satisfies ChartConfig;
 
 type StatsResponse = {
   totalCalls: number;
@@ -30,6 +20,23 @@ type StatsResponse = {
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function MiniChart() {
+  const { t } = useTranslation("common");
+
+  const chartConfig = React.useMemo(
+    () =>
+      ({
+        resolved: {
+          label: t("common.dashboard.overview.chart.resolvedLabel"),
+          color: "var(--chart-2)",
+        },
+        pending: {
+          label: t("common.dashboard.overview.chart.pendingLabel"),
+          color: "var(--color-destructive)",
+        },
+      }) satisfies ChartConfig,
+    [t],
+  );
+
   const { data, error } = useSWR<StatsResponse>(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/stats`,
     fetcher,
@@ -73,7 +80,9 @@ export function MiniChart() {
             style={{ backgroundColor: "var(--chart-1)" }}
             aria-hidden
           />
-          <span className="text-muted-foreground">Cases resolved</span>
+          <span className="text-muted-foreground">
+            {t("common.dashboard.overview.chart.casesResolved")}
+          </span>
           <span className="ml-auto font-semibold tabular-nums text-foreground">
             {totalResolved}
           </span>
@@ -84,7 +93,9 @@ export function MiniChart() {
             style={{ backgroundColor: "var(--color-destructive)" }}
             aria-hidden
           />
-          <span className="text-muted-foreground">Pending</span>
+          <span className="text-muted-foreground">
+            {t("common.dashboard.overview.chart.pending")}
+          </span>
           <span className="ml-auto font-semibold tabular-nums text-foreground">
             {pending}
           </span>
@@ -94,7 +105,7 @@ export function MiniChart() {
       <div className="mx-auto w-full max-w-[220px] shrink-0 sm:mx-0">
         {total === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            No call data yet. Log activity to see your mix here.
+            {t("common.dashboard.overview.chart.empty")}
           </p>
         ) : (
           <ChartContainer config={chartConfig} className="aspect-square w-full">
@@ -131,7 +142,7 @@ export function MiniChart() {
                             y={(viewBox.cy || 0) + 20}
                             className="fill-muted-foreground text-xs"
                           >
-                            total
+                            {t("common.dashboard.overview.chart.total")}
                           </tspan>
                         </text>
                       );

@@ -22,7 +22,9 @@
       }
     },
     "languageSwitcher": {
-      "placeholder": "Language"
+      "placeholder": "Language",
+      "heading": "Language",
+      "ariaLabel": "Select language"
     },
     "validation": {
       "registerUsernameMin": "Username must be at least 3 characters long",
@@ -113,6 +115,66 @@
         "shortcutHintHighlight": "New call sheet",
         "shortcutHintAfter": "."
       },
+      "overview": {
+        "chart": {
+          "resolvedLabel": "Resolved",
+          "pendingLabel": "Pending",
+          "casesResolved": "Cases resolved",
+          "pending": "Pending",
+          "empty": "No call data yet. Log activity to see your mix here.",
+          "total": "total"
+        },
+        "summary": {
+          "title": "Activity & queue",
+          "lastResolved": "Last case resolved:",
+          "noResolvedYet": "No resolved case yet",
+          "recentlyResolved": "Recently resolved",
+          "resolvedHoursAgoBy": "Resolved {{hours}} hours ago by {{user}}",
+          "callReason": "Call reason: {{reason}}",
+          "noCasesResolvedYet": "No cases resolved yet",
+          "waitingForSupport": "Waiting for support",
+          "caseOpenedBy": "Case opened {{date}} by {{user}}"
+        },
+        "newCallSheet": {
+          "triggerTitle": "New call sheet",
+          "triggerSubtitle": "Log a support case",
+          "title": "New call sheet",
+          "description": "Capture who called, from which line, and what they need—so your team can follow up quickly.",
+          "problemTypeLabel": "Problem type",
+          "problemTypeDescription": "Short label (e.g. billing, outage, installation).",
+          "problemTypePlaceholder": "e.g. Network outage",
+          "whatHappenedLabel": "What happened?",
+          "whatHappenedDescription": "Enough detail for the next person to understand the case.",
+          "whatHappenedPlaceholder": "Describe the issue, steps tried, urgency…",
+          "callDetails": "Call details",
+          "lineLabel": "Line",
+          "linePlaceholder": "SIM",
+          "callerNumberLabel": "Caller number",
+          "callerNumberPlaceholder": "e.g. 0555 12 34 56",
+          "customerSection": "Customer",
+          "accountLabel": "Account",
+          "accountDescription": "Search with command palette and select a customer.",
+          "selectCustomer": "Select a customer",
+          "loadingCustomers": "Loading customers...",
+          "searchCustomerPlaceholder": "Search customer...",
+          "noCustomersFound": "No customers found.",
+          "customersHeading": "Customers",
+          "notesLabel": "Notes",
+          "optional": "(optional)",
+          "notesDescription": "Internal notes—visible to your team on the call sheet.",
+          "notesPlaceholder": "Anything else worth remembering…",
+          "savedAs": "Saved as",
+          "untilResolved": "until resolved.",
+          "cancel": "Cancel",
+          "saving": "Saving…",
+          "submit": "Create call sheet",
+          "toastSuccess": "Call sheet created successfully.",
+          "errors": {
+            "loadCustomersFailed": "Failed to load customers",
+            "loadCustomersToast": "Could not load customers. Try again."
+          }
+        }
+      },
       "customers": {
         "pageTitle": "Customers",
         "pageDescription": "Search and review customer profile details and reputation ratings.",
@@ -141,6 +203,49 @@
         "reputationPoor": "Poor",
         "view": "View",
         "dash": "—"
+      },
+      "customerDetail": {
+        "loading": "Loading customer…",
+        "notFound": "Customer not found.",
+        "backToCustomers": "Back to customers",
+        "allCustomers": "All customers",
+        "basedOnRatedCalls": "based on {{count}} rated call",
+        "basedOnRatedCalls_plural": "based on {{count}} rated calls",
+        "dash": "—",
+        "currency": "DA",
+        "resolvedBy": "resolved by {{user}}",
+        "showDetails": "Show details",
+        "hideDetails": "Hide details",
+        "noCalls": "No calls recorded for this customer.",
+        "stats": {
+          "totalCalls": "Total calls",
+          "resolved": "Resolved",
+          "pending": "Pending",
+          "avgRating": "Avg. rating"
+        },
+        "sections": {
+          "contactInformation": "Contact information",
+          "accountDetails": "Account details",
+          "callHistory": "Call history"
+        },
+        "fields": {
+          "contact": "Contact",
+          "phone": "Phone",
+          "email": "Email",
+          "location": "Location",
+          "address": "Address",
+          "balance": "Balance (Solde)",
+          "creditLimit": "Credit limit",
+          "notes": "Notes"
+        },
+        "rating": {
+          "notRated": "Not rated",
+          "unrated": "Unrated",
+          "excellent": "Excellent",
+          "good": "Good",
+          "average": "Average",
+          "poor": "Poor"
+        }
       },
       "calls": {
         "loading": "Loading…",

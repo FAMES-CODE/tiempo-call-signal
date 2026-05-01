@@ -47,6 +47,7 @@ import {
 import { useState } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 const LINE_OPTIONS = [
   { value: "905", label: "905" },
@@ -57,6 +58,7 @@ const LINE_OPTIONS = [
 type CustomerOption = { id: number; CLIENT: string };
 
 function NewformSheet() {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
@@ -86,12 +88,12 @@ function NewformSheet() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/customers`,
       );
-      if (!res.ok) throw new Error("Failed to load customers");
+      if (!res.ok) throw new Error(t("common.dashboard.overview.newCallSheet.errors.loadCustomersFailed"));
       const data: CustomerOption[] = await res.json();
       setCustomers(data);
     } catch (e) {
       console.error(e);
-      toast.error("Could not load customers. Try again.");
+      toast.error(t("common.dashboard.overview.newCallSheet.errors.loadCustomersToast"));
     } finally {
       setLoadingCustomers(false);
     }
@@ -109,7 +111,7 @@ function NewformSheet() {
     });
 
     if (result.success) {
-      toast.success("Call sheet created successfully.");
+      toast.success(t("common.dashboard.overview.newCallSheet.toastSuccess"));
       reset();
       setOpen(false);
     } else {
@@ -145,9 +147,11 @@ function NewformSheet() {
               <Plus className="size-5" strokeWidth={2.5} aria-hidden />
             </span>
             <span className="flex flex-col items-start text-left leading-tight">
-              <span className="text-sm font-semibold">New call sheet</span>
+              <span className="text-sm font-semibold">
+                {t("common.dashboard.overview.newCallSheet.triggerTitle")}
+              </span>
               <span className="text-xs font-normal text-primary-foreground/80">
-                Log a support case
+                {t("common.dashboard.overview.newCallSheet.triggerSubtitle")}
               </span>
             </span>
           </Button>
@@ -161,11 +165,10 @@ function NewformSheet() {
               <Headphones className="size-6" aria-hidden />
             </div>
             <DialogTitle className="text-xl font-semibold tracking-tight">
-              New call sheet
+              {t("common.dashboard.overview.newCallSheet.title")}
             </DialogTitle>
             <DialogDescription className="text-sm leading-relaxed">
-              Capture who called, from which line, and what they need—so your
-              team can follow up quickly.
+              {t("common.dashboard.overview.newCallSheet.description")}
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -177,13 +180,15 @@ function NewformSheet() {
           <div className="space-y-5 overflow-y-auto px-6 py-5">
             <FieldGroup className="gap-5">
               <Field>
-                <FieldLabel htmlFor="problemType">Problem type</FieldLabel>
+                <FieldLabel htmlFor="problemType">
+                  {t("common.dashboard.overview.newCallSheet.problemTypeLabel")}
+                </FieldLabel>
                 <FieldDescription>
-                  Short label (e.g. billing, outage, installation).
+                  {t("common.dashboard.overview.newCallSheet.problemTypeDescription")}
                 </FieldDescription>
                 <Input
                   id="problemType"
-                  placeholder="e.g. Network outage"
+                  placeholder={t("common.dashboard.overview.newCallSheet.problemTypePlaceholder")}
                   autoComplete="off"
                   className={cn(errors.problemType && "border-destructive")}
                   {...register("problemType")}
@@ -195,14 +200,14 @@ function NewformSheet() {
 
               <Field>
                 <FieldLabel htmlFor="problemDescription">
-                  What happened?
+                  {t("common.dashboard.overview.newCallSheet.whatHappenedLabel")}
                 </FieldLabel>
                 <FieldDescription>
-                  Enough detail for the next person to understand the case.
+                  {t("common.dashboard.overview.newCallSheet.whatHappenedDescription")}
                 </FieldDescription>
                 <Textarea
                   id="problemDescription"
-                  placeholder="Describe the issue, steps tried, urgency…"
+                  placeholder={t("common.dashboard.overview.newCallSheet.whatHappenedPlaceholder")}
                   rows={4}
                   className={cn(
                     "min-h-[100px] resize-y",
@@ -221,11 +226,13 @@ function NewformSheet() {
             <div>
               <div className="mb-3 flex items-center gap-2 text-sm font-medium">
                 <Phone className="size-4 text-muted-foreground" aria-hidden />
-                Call details
+                {t("common.dashboard.overview.newCallSheet.callDetails")}
               </div>
               <div className="grid gap-4 sm:grid-cols-[minmax(0,120px)_1fr]">
                 <Field>
-                  <FieldLabel htmlFor="callSim">Line</FieldLabel>
+                  <FieldLabel htmlFor="callSim">
+                    {t("common.dashboard.overview.newCallSheet.lineLabel")}
+                  </FieldLabel>
                   <Controller
                     control={control}
                     name="callSim"
@@ -239,7 +246,7 @@ function NewformSheet() {
                           className={cn(errors.callSim && "border-destructive")}
                           aria-invalid={!!errors.callSim}
                         >
-                          <SelectValue placeholder="SIM" />
+                          <SelectValue placeholder={t("common.dashboard.overview.newCallSheet.linePlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
@@ -259,12 +266,14 @@ function NewformSheet() {
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="callNumber">Caller number</FieldLabel>
+                  <FieldLabel htmlFor="callNumber">
+                    {t("common.dashboard.overview.newCallSheet.callerNumberLabel")}
+                  </FieldLabel>
                   <Input
                     id="callNumber"
                     type="tel"
                     inputMode="tel"
-                    placeholder="e.g. 0555 12 34 56"
+                    placeholder={t("common.dashboard.overview.newCallSheet.callerNumberPlaceholder")}
                     className={cn(errors.callNumber && "border-destructive")}
                     {...register("callNumber")}
                   />
@@ -283,16 +292,18 @@ function NewformSheet() {
                   className="size-4 text-muted-foreground"
                   aria-hidden
                 />
-                Customer
+                {t("common.dashboard.overview.newCallSheet.customerSection")}
               </div>
               <Controller
                 control={control}
                 name="customerId"
                 render={({ field }) => (
                   <Field className="mt-3">
-                    <FieldLabel htmlFor="customerId">Account</FieldLabel>
+                    <FieldLabel htmlFor="customerId">
+                      {t("common.dashboard.overview.newCallSheet.accountLabel")}
+                    </FieldLabel>
                     <FieldDescription>
-                      Search with command palette and select a customer.
+                      {t("common.dashboard.overview.newCallSheet.accountDescription")}
                     </FieldDescription>
                     <div className="relative">
                       <Button
@@ -311,20 +322,20 @@ function NewformSheet() {
                         <span className="truncate">
                           {field.value > 0
                             ? (customers.find((c) => c.id === field.value)?.CLIENT ??
-                              "Select a customer")
+                              t("common.dashboard.overview.newCallSheet.selectCustomer"))
                             : loadingCustomers
-                              ? "Loading customers..."
-                              : "Select a customer"}
+                              ? t("common.dashboard.overview.newCallSheet.loadingCustomers")
+                              : t("common.dashboard.overview.newCallSheet.selectCustomer")}
                         </span>
                         <ChevronsUpDown className="size-4 shrink-0 opacity-60" />
                       </Button>
                       {customerPickerOpen && (
                         <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-xl border bg-popover shadow-lg">
                           <Command>
-                            <CommandInput placeholder="Search customer..." />
+                            <CommandInput placeholder={t("common.dashboard.overview.newCallSheet.searchCustomerPlaceholder")} />
                             <CommandList>
-                              <CommandEmpty>No customers found.</CommandEmpty>
-                              <CommandGroup heading="Customers">
+                              <CommandEmpty>{t("common.dashboard.overview.newCallSheet.noCustomersFound")}</CommandEmpty>
+                              <CommandGroup heading={t("common.dashboard.overview.newCallSheet.customersHeading")}>
                                 {customers.map((c) => (
                                   <CommandItem
                                     key={c.id}
@@ -359,17 +370,17 @@ function NewformSheet() {
 
             <Field>
               <FieldLabel htmlFor="observation">
-                Notes{" "}
+                {t("common.dashboard.overview.newCallSheet.notesLabel")}{" "}
                 <span className="font-normal text-muted-foreground">
-                  (optional)
+                  {t("common.dashboard.overview.newCallSheet.optional")}
                 </span>
               </FieldLabel>
               <FieldDescription>
-                Internal notes—visible to your team on the call sheet.
+                {t("common.dashboard.overview.newCallSheet.notesDescription")}
               </FieldDescription>
               <Textarea
                 id="observation"
-                placeholder="Anything else worth remembering…"
+                placeholder={t("common.dashboard.overview.newCallSheet.notesPlaceholder")}
                 rows={3}
                 className="resize-y"
                 {...register("observation")}
@@ -380,9 +391,11 @@ function NewformSheet() {
           <div className="flex flex-col gap-3 border-t bg-muted/30 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="flex items-center gap-2 text-xs text-muted-foreground">
               <ClipboardList className="size-3.5 shrink-0" aria-hidden />
-              Saved as{" "}
-              <span className="font-medium text-foreground">pending</span> until
-              resolved.
+              {t("common.dashboard.overview.newCallSheet.savedAs")}{" "}
+              <span className="font-medium text-foreground">
+                {t("common.dashboard.calls.statusPending")}
+              </span>{" "}
+              {t("common.dashboard.overview.newCallSheet.untilResolved")}
             </p>
             <div className="flex gap-2">
               <Button
@@ -391,7 +404,7 @@ function NewformSheet() {
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting}
               >
-                Cancel
+                {t("common.dashboard.overview.newCallSheet.cancel")}
               </Button>
               <Button
                 type="submit"
@@ -401,10 +414,10 @@ function NewformSheet() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    Saving…
+                    {t("common.dashboard.overview.newCallSheet.saving")}
                   </>
                 ) : (
-                  "Create call sheet"
+                  t("common.dashboard.overview.newCallSheet.submit")
                 )}
               </Button>
             </div>

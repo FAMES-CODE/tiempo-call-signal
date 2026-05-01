@@ -22,7 +22,9 @@
       }
     },
     "languageSwitcher": {
-      "placeholder": "اللغة"
+      "placeholder": "اللغة",
+      "heading": "اللغة",
+      "ariaLabel": "اختر اللغة"
     },
     "validation": {
       "registerUsernameMin": "يجب أن يكون اسم المستخدم 3 أحرف على الأقل",
@@ -113,6 +115,66 @@
         "shortcutHintHighlight": "ورقة مكالمة جديدة",
         "shortcutHintAfter": "."
       },
+      "overview": {
+        "chart": {
+          "resolvedLabel": "محلولة",
+          "pendingLabel": "معلقة",
+          "casesResolved": "الحالات المحلولة",
+          "pending": "معلقة",
+          "empty": "لا توجد بيانات مكالمات بعد. سجّل نشاطًا لرؤية التوزيع هنا.",
+          "total": "الإجمالي"
+        },
+        "summary": {
+          "title": "النشاط وقائمة الانتظار",
+          "lastResolved": "آخر حالة تم حلّها:",
+          "noResolvedYet": "لا توجد حالة محلولة بعد",
+          "recentlyResolved": "حالات تم حلّها مؤخرًا",
+          "resolvedHoursAgoBy": "تم الحل قبل {{hours}} ساعة بواسطة {{user}}",
+          "callReason": "سبب المكالمة: {{reason}}",
+          "noCasesResolvedYet": "لا توجد حالات محلولة بعد",
+          "waitingForSupport": "بانتظار الدعم",
+          "caseOpenedBy": "تم فتح الحالة بتاريخ {{date}} بواسطة {{user}}"
+        },
+        "newCallSheet": {
+          "triggerTitle": "ورقة مكالمة جديدة",
+          "triggerSubtitle": "تسجيل حالة دعم",
+          "title": "ورقة مكالمة جديدة",
+          "description": "سجّل من اتصل، ومن أي خط، وما الذي يحتاجه—ليتمكن الفريق من المتابعة بسرعة.",
+          "problemTypeLabel": "نوع المشكلة",
+          "problemTypeDescription": "عنوان قصير (مثل: الفوترة، انقطاع، تركيب).",
+          "problemTypePlaceholder": "مثال: انقطاع الشبكة",
+          "whatHappenedLabel": "ماذا حدث؟",
+          "whatHappenedDescription": "تفاصيل كافية ليتمكن الشخص التالي من فهم الحالة.",
+          "whatHappenedPlaceholder": "صف المشكلة، الخطوات المجربة، درجة الاستعجال…",
+          "callDetails": "تفاصيل المكالمة",
+          "lineLabel": "الخط",
+          "linePlaceholder": "SIM",
+          "callerNumberLabel": "رقم المتصل",
+          "callerNumberPlaceholder": "مثال: 0555 12 34 56",
+          "customerSection": "العميل",
+          "accountLabel": "الحساب",
+          "accountDescription": "ابحث وحدد عميلًا.",
+          "selectCustomer": "اختر عميلًا",
+          "loadingCustomers": "جاري تحميل العملاء…",
+          "searchCustomerPlaceholder": "ابحث عن عميل…",
+          "noCustomersFound": "لم يتم العثور على عملاء.",
+          "customersHeading": "العملاء",
+          "notesLabel": "ملاحظات",
+          "optional": "(اختياري)",
+          "notesDescription": "ملاحظات داخلية — تظهر للفريق على ورقة المكالمة.",
+          "notesPlaceholder": "أي شيء آخر يستحق التذكر…",
+          "savedAs": "محفوظة كـ",
+          "untilResolved": "حتى يتم الحل.",
+          "cancel": "إلغاء",
+          "saving": "جارٍ الحفظ…",
+          "submit": "إنشاء ورقة مكالمة",
+          "toastSuccess": "تم إنشاء ورقة المكالمة بنجاح.",
+          "errors": {
+            "loadCustomersFailed": "فشل تحميل العملاء",
+            "loadCustomersToast": "تعذر تحميل العملاء. حاول مرة أخرى."
+          }
+        }
+      },
       "customers": {
         "pageTitle": "العملاء",
         "pageDescription": "ابحث واطلع على تفاصيل العملاء وتقييمات السمعة.",
@@ -141,6 +203,49 @@
         "reputationPoor": "ضعيف",
         "view": "عرض",
         "dash": "—"
+      },
+      "customerDetail": {
+        "loading": "جاري تحميل العميل…",
+        "notFound": "لم يتم العثور على العميل.",
+        "backToCustomers": "العودة إلى العملاء",
+        "allCustomers": "كل العملاء",
+        "basedOnRatedCalls": "استنادًا إلى {{count}} مكالمة مُقَيّمة",
+        "basedOnRatedCalls_plural": "استنادًا إلى {{count}} مكالمات مُقَيّمة",
+        "dash": "—",
+        "currency": "DA",
+        "resolvedBy": "تم الحل بواسطة {{user}}",
+        "showDetails": "عرض التفاصيل",
+        "hideDetails": "إخفاء التفاصيل",
+        "noCalls": "لا توجد مكالمات مسجلة لهذا العميل.",
+        "stats": {
+          "totalCalls": "إجمالي المكالمات",
+          "resolved": "محلولة",
+          "pending": "معلقة",
+          "avgRating": "متوسط التقييم"
+        },
+        "sections": {
+          "contactInformation": "معلومات الاتصال",
+          "accountDetails": "تفاصيل الحساب",
+          "callHistory": "سجل المكالمات"
+        },
+        "fields": {
+          "contact": "جهة الاتصال",
+          "phone": "الهاتف",
+          "email": "البريد الإلكتروني",
+          "location": "الموقع",
+          "address": "العنوان",
+          "balance": "الرصيد",
+          "creditLimit": "حد الائتمان",
+          "notes": "ملاحظات"
+        },
+        "rating": {
+          "notRated": "غير مُقيّم",
+          "unrated": "غير مُقيّم",
+          "excellent": "ممتاز",
+          "good": "جيد",
+          "average": "متوسط",
+          "poor": "ضعيف"
+        }
       },
       "calls": {
         "loading": "جاري التحميل…",

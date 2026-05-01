@@ -6,6 +6,7 @@ import {
 } from "next-i18next/server";
 import { I18nProvider } from "next-i18next/client";
 import i18nConfig from "../../i18n.config";
+import HtmlLangDir from "@/components/i18n/html-lang-dir";
 
 initServerI18next(i18nConfig);
 
@@ -26,6 +27,7 @@ export default async function RootLayout({
 
   return (
     <I18nProvider language={lng} resources={resources}>
+      <HtmlLangDir lng={lng} />
       {children}
     </I18nProvider>
   );

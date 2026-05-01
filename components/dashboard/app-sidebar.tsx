@@ -58,7 +58,7 @@ function isNavActive(pathname: string, href: string) {
 function AppSidebar() {
   const pathname = usePathname() ?? "/dashboard";
   const { data: session, status } = useSession();
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const prefix = useLocalePrefix();
 
   if (status === "loading") {
@@ -66,7 +66,11 @@ function AppSidebar() {
   }
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar
+      variant="inset"
+      collapsible="icon"
+      side={i18n.dir() === "rtl" ? "right" : "left"}
+    >
       <SidebarHeader className="border-b border-sidebar-border/80 p-2">
         <SidebarMenu>
           <SidebarMenuItem>

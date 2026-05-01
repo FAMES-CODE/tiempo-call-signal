@@ -22,7 +22,9 @@
       }
     },
     "languageSwitcher": {
-      "placeholder": "Langue"
+      "placeholder": "Langue",
+      "heading": "Langue",
+      "ariaLabel": "Choisir la langue"
     },
     "validation": {
       "registerUsernameMin": "Le nom d'utilisateur doit contenir au moins 3 caractères",
@@ -113,6 +115,66 @@
         "shortcutHintHighlight": "Nouvelle fiche d'appel",
         "shortcutHintAfter": "."
       },
+      "overview": {
+        "chart": {
+          "resolvedLabel": "Résolus",
+          "pendingLabel": "En attente",
+          "casesResolved": "Dossiers résolus",
+          "pending": "En attente",
+          "empty": "Aucune donnée d'appel pour l'instant. Enregistrez une activité pour voir la répartition ici.",
+          "total": "total"
+        },
+        "summary": {
+          "title": "Activité & file d'attente",
+          "lastResolved": "Dernier dossier résolu :",
+          "noResolvedYet": "Aucun dossier résolu pour l'instant",
+          "recentlyResolved": "Récemment résolus",
+          "resolvedHoursAgoBy": "Résolu il y a {{hours}} heure(s) par {{user}}",
+          "callReason": "Motif : {{reason}}",
+          "noCasesResolvedYet": "Aucun dossier résolu pour l'instant",
+          "waitingForSupport": "En attente de support",
+          "caseOpenedBy": "Dossier ouvert le {{date}} par {{user}}"
+        },
+        "newCallSheet": {
+          "triggerTitle": "Nouvelle fiche d'appel",
+          "triggerSubtitle": "Enregistrer un dossier support",
+          "title": "Nouvelle fiche d'appel",
+          "description": "Saisissez qui a appelé, depuis quelle ligne, et le besoin—afin que l’équipe puisse suivre rapidement.",
+          "problemTypeLabel": "Type de problème",
+          "problemTypeDescription": "Libellé court (ex. facturation, panne, installation).",
+          "problemTypePlaceholder": "ex. Panne réseau",
+          "whatHappenedLabel": "Que s'est-il passé ?",
+          "whatHappenedDescription": "Assez de détails pour que la prochaine personne comprenne le dossier.",
+          "whatHappenedPlaceholder": "Décrivez le problème, les essais, l'urgence…",
+          "callDetails": "Détails de l'appel",
+          "lineLabel": "Ligne",
+          "linePlaceholder": "SIM",
+          "callerNumberLabel": "Numéro appelant",
+          "callerNumberPlaceholder": "ex. 0555 12 34 56",
+          "customerSection": "Client",
+          "accountLabel": "Compte",
+          "accountDescription": "Recherchez et sélectionnez un client.",
+          "selectCustomer": "Sélectionner un client",
+          "loadingCustomers": "Chargement des clients…",
+          "searchCustomerPlaceholder": "Rechercher un client…",
+          "noCustomersFound": "Aucun client trouvé.",
+          "customersHeading": "Clients",
+          "notesLabel": "Notes",
+          "optional": "(optionnel)",
+          "notesDescription": "Notes internes — visibles par l'équipe sur la fiche d'appel.",
+          "notesPlaceholder": "Quelque chose d'autre à retenir…",
+          "savedAs": "Enregistré comme",
+          "untilResolved": "jusqu'à résolution.",
+          "cancel": "Annuler",
+          "saving": "Enregistrement…",
+          "submit": "Créer la fiche d'appel",
+          "toastSuccess": "Fiche d'appel créée avec succès.",
+          "errors": {
+            "loadCustomersFailed": "Échec du chargement des clients",
+            "loadCustomersToast": "Impossible de charger les clients. Réessayez."
+          }
+        }
+      },
       "customers": {
         "pageTitle": "Clients",
         "pageDescription": "Recherchez et consultez les fiches clients et les évaluations.",
@@ -141,6 +203,49 @@
         "reputationPoor": "Faible",
         "view": "Voir",
         "dash": "—"
+      },
+      "customerDetail": {
+        "loading": "Chargement du client…",
+        "notFound": "Client introuvable.",
+        "backToCustomers": "Retour aux clients",
+        "allCustomers": "Tous les clients",
+        "basedOnRatedCalls": "basé sur {{count}} appel noté",
+        "basedOnRatedCalls_plural": "basé sur {{count}} appels notés",
+        "dash": "—",
+        "currency": "DA",
+        "resolvedBy": "résolu par {{user}}",
+        "showDetails": "Afficher les détails",
+        "hideDetails": "Masquer les détails",
+        "noCalls": "Aucun appel enregistré pour ce client.",
+        "stats": {
+          "totalCalls": "Total appels",
+          "resolved": "Résolus",
+          "pending": "En attente",
+          "avgRating": "Note moy."
+        },
+        "sections": {
+          "contactInformation": "Informations de contact",
+          "accountDetails": "Détails du compte",
+          "callHistory": "Historique des appels"
+        },
+        "fields": {
+          "contact": "Contact",
+          "phone": "Téléphone",
+          "email": "Email",
+          "location": "Localisation",
+          "address": "Adresse",
+          "balance": "Solde",
+          "creditLimit": "Limite de crédit",
+          "notes": "Notes"
+        },
+        "rating": {
+          "notRated": "Non noté",
+          "unrated": "Non noté",
+          "excellent": "Excellent",
+          "good": "Bon",
+          "average": "Moyen",
+          "poor": "Faible"
+        }
       },
       "calls": {
         "loading": "Chargement…",

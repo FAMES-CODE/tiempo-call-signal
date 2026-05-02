@@ -353,6 +353,60 @@
         "resetPassword": "Reset password",
         "resetting": "Resetting…",
         "passwordResetFailed": "Password reset failed"
+      },
+      "adminUser": {
+        "backToAdmin": "Return to admin",
+        "eyebrow": "User statistics",
+        "fallbackUser": "User #{{id}}",
+        "description": "All metrics cover the entire history. The created sheets and associated charts only concern sheets created by this user. \"Resolved by him\" counts all sheets closed by him (regardless of the author).",
+        "loadFailed": "Failed to load user stats",
+        "loadError": "Unable to load statistics.",
+        "loading": "Loading…",
+        "stats": {
+          "createdTotal": "Sheets created by him (total)",
+          "pendingAmong": "Pending (among these sheets)",
+          "closedAmong": "Closed (among these sheets)",
+          "resolvedByUserTotal": "Resolved by him — all sheets (total)"
+        },
+        "calendar": {
+          "title": "Calendar (created sheets)",
+          "prevMonthAria": "Previous month",
+          "nextMonthAria": "Next month",
+          "periodHint": "Data for the entire period: {{range}}. Each displayed day uses the entire history — change the month to browse the entire period.",
+          "dayTooltipWithCount": "{{date}}: {{count}} sheet(s) created",
+          "lastActiveMonth": "Last active month",
+          "firstActiveMonth": "First active month",
+          "less": "Less",
+          "more": "More"
+        },
+        "monthly": {
+          "title": "Monthly distribution (created sheets, entire history)",
+          "subtitle": "A monthly bar chart with at least one creation ({{months}} month(s)).",
+          "empty": "No sheet created."
+        },
+        "recentDays": {
+          "title": "Activity by day",
+          "subtitle": "Created sheets by day (recent first). Filtering and pagination for large volumes.",
+          "daysBadge": "{{days}} day(s)",
+          "empty": "No day with creation recorded.",
+          "filterPlaceholder": "Filter (e.g. 2024-03, Mar. 15…)",
+          "filterAria": "Filter the days",
+          "linesPerPage": "Lines per page",
+          "noMatch": "No day corresponds to « {{query}} ».",
+          "clearFilter": "Clear the filter",
+          "filteredSuffix": " (filtered)",
+          "summary": "{{days}} day(s){{filteredLabel}} · total {{sheets}} sheet(s)",
+          "peak": "Peak: {{count}} on {{day}}",
+          "day": "Day",
+          "intensity": "Intensity (relative to the filter)",
+          "sheets": "Sheets",
+          "range": "{{start}}–{{end}} of {{total}}",
+          "firstPageAria": "First page",
+          "prevPageAria": "Previous page",
+          "nextPageAria": "Next page",
+          "lastPageAria": "Last page",
+          "page": "Page {{page}} / {{total}}"
+        }
       }
     }
   },

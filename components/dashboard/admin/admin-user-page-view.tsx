@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import useSWR from "swr";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Loader2,
@@ -37,6 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
 
 
 type UserStatsResponse = {
@@ -55,9 +57,9 @@ function parseDayKeyLocal(dayKey: string): Date {
   return new Date(`${dayKey}T12:00:00`);
 }
 
-function formatDayLabel(dayKey: string): string {
+function formatDayLabel(dayKey: string, locale?: string): string {
   try {
-    return parseDayKeyLocal(dayKey).toLocaleDateString("en-US", {
+    return parseDayKeyLocal(dayKey).toLocaleDateString(locale || undefined, {
       weekday: "short",
       day: "numeric",
       month: "short",
@@ -68,35 +70,26 @@ function formatDayLabel(dayKey: string): string {
   }
 }
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.error || "Failed to load user stats");
+function formatMonthYear(month: number, year: number, locale?: string) {
+  try {
+    return new Date(year, month, 1).toLocaleDateString(locale || undefined, {
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    return `${month + 1}/${year}`;
   }
-  return (await res.json()) as UserStatsResponse;
-};
-
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+}
 
 // ─── Activity Heatmap Calendar ────────────────────────────────────────────────
 function ActivityCalendar({
   perDay,
+  locale,
+  t,
 }: {
   perDay: Array<{ day: string; count: number }>;
+  locale: string;
+  t: (key: string, options?: any) => string;
 }) {
   const today = new Date();
   const latestDayKey = perDay[0]?.day ?? "";
@@ -180,15 +173,25 @@ function ActivityCalendar({
 
   const rangeLabel =
     oldestDayKey && latestDayKey
-      ? `${parseDayKeyLocal(oldestDayKey).toLocaleDateString("en-US")} → ${parseDayKeyLocal(latestDayKey).toLocaleDateString("en-US")}`
+      ? `${parseDayKeyLocal(oldestDayKey).toLocaleDateString(locale || undefined)} → ${parseDayKeyLocal(latestDayKey).toLocaleDateString(locale || undefined)}`
       : null;
+
+  const weekDayLabels = React.useMemo(() => {
+    const base = new Date(Date.UTC(2021, 0, 4)); // Monday
+    return Array.from({ length: 7 }, (_, i) =>
+      new Date(base.getTime() + i * 86400000).toLocaleDateString(
+        locale || undefined,
+        { weekday: "long" },
+      ),
+    );
+  }, [locale]);
 
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">
-            Calendar (created sheets)
+            {t("common.dashboard.adminUser.calendar.title")}
           </CardTitle>
           <div className="flex items-center gap-1">
             <Button
@@ -196,19 +199,19 @@ function ActivityCalendar({
               size="icon"
               className="size-7"
               onClick={prevMonth}
-              aria-label="Previous month"
+              aria-label={t("common.dashboard.adminUser.calendar.prevMonthAria")}
             >
               <ChevronLeft className="size-4" />
             </Button>
             <span className="min-w-[140px] text-center text-sm font-medium capitalize">
-              {MONTH_NAMES[month]} {vy}
+              {formatMonthYear(month, vy, locale)}
             </span>
             <Button
               variant="ghost"
               size="icon"
               className="size-7"
               onClick={nextMonth}
-              aria-label="Next month"
+              aria-label={t("common.dashboard.adminUser.calendar.nextMonthAria")}
             >
               <ChevronRight className="size-4" />
             </Button>
@@ -216,15 +219,16 @@ function ActivityCalendar({
         </div>
         {rangeLabel ? (
           <p className="mt-2 text-xs text-muted-foreground">
-            Data for the entire period: {rangeLabel}. Each displayed day uses the entire history —
-            change the month to browse the entire period.
+            {t("common.dashboard.adminUser.calendar.periodHint", {
+              range: rangeLabel,
+            })}
           </p>
         ) : null}
       </CardHeader>
       <CardContent>
         {/* Day-of-week headers */}
         <div className="mb-1 grid grid-cols-7 gap-1">
-          {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
+          {weekDayLabels.map((d) => (
             <div
               key={d}
               className="text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
@@ -254,7 +258,10 @@ function ActivityCalendar({
                 key={dateStr}
                 title={
                   count > 0
-                    ? `${dateStr} : ${count} sheet${count !== 1 ? "s" : ""} created${count !== 1 ? "s" : ""}`
+                    ? t("common.dashboard.adminUser.calendar.dayTooltipWithCount", {
+                        date: dateStr,
+                        count,
+                      })
                     : dateStr
                 }
                 className={[
@@ -292,7 +299,7 @@ function ActivityCalendar({
               onClick={jumpToLatest}
               disabled={!latestDayKey}
             >
-              Last active month
+              {t("common.dashboard.adminUser.calendar.lastActiveMonth")}
             </Button>
             <Button
               type="button"
@@ -302,11 +309,13 @@ function ActivityCalendar({
               onClick={jumpToOldest}
               disabled={!oldestDayKey}
             >
-              First active month
+              {t("common.dashboard.adminUser.calendar.firstActiveMonth")}
             </Button>
           </div>
           <div className="flex items-center justify-end gap-1.5">
-            <span className="text-[10px] text-muted-foreground">Less</span>
+            <span className="text-[10px] text-muted-foreground">
+              {t("common.dashboard.adminUser.calendar.less")}
+            </span>
             {[
               "bg-muted/40",
               "bg-emerald-200 dark:bg-emerald-900/60",
@@ -316,7 +325,9 @@ function ActivityCalendar({
             ].map((cls, i) => (
               <div key={i} className={`size-3 rounded-sm ${cls}`} />
             ))}
-            <span className="text-[10px] text-muted-foreground">More</span>
+            <span className="text-[10px] text-muted-foreground">
+              {t("common.dashboard.adminUser.calendar.more")}
+            </span>
           </div>
         </div>
       </CardContent>
@@ -325,10 +336,10 @@ function ActivityCalendar({
 }
 
 // ─── Monthly bar chart ────────────────────────────────────────────────────────
-function formatYearMonthFr(ymKey: string) {
+function formatYearMonth(ymKey: string, locale?: string) {
   const [y, m] = ymKey.split("-").map(Number);
   if (!y || !m) return ymKey;
-  return new Date(y, m - 1, 1).toLocaleDateString("en-US", {
+  return new Date(y, m - 1, 1).toLocaleDateString(locale || undefined, {
     month: "short",
     year: "numeric",
   });
@@ -336,8 +347,12 @@ function formatYearMonthFr(ymKey: string) {
 
 function MonthlyChart({
   perMonth,
+  locale,
+  t,
 }: {
   perMonth: Array<{ key: string; count: number }>;
+  locale: string;
+  t: (key: string, options?: any) => string;
 }) {
   const maxCount = Math.max(1, ...perMonth.map((r) => r.count));
 
@@ -345,16 +360,18 @@ function MonthlyChart({
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">
-          Monthly distribution (created sheets, entire history)
+          {t("common.dashboard.adminUser.monthly.title")}
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          A monthly bar chart with at least one creation ({perMonth.length} months).
+          {t("common.dashboard.adminUser.monthly.subtitle", {
+            months: perMonth.length,
+          })}
         </p>
       </CardHeader>
       <CardContent>
         {perMonth.length === 0 ? (
           <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-            No sheet created.
+            {t("common.dashboard.adminUser.monthly.empty")}
           </div>
         ) : (
           <>
@@ -369,7 +386,8 @@ function MonthlyChart({
                       className="group relative flex w-8 min-w-[28px] shrink-0 flex-col items-center justify-end sm:w-9"
                     >
                       <div className="pointer-events-none absolute bottom-full z-10 mb-1.5 hidden whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-center text-[10px] text-background shadow-lg group-hover:block">
-                        {formatYearMonthFr(row.key)} : <strong>{row.count}</strong>
+                        {formatYearMonth(row.key, locale)} :{" "}
+                        <strong>{row.count}</strong>
                       </div>
                       <div
                         className="w-full min-h-[3px] rounded-t-md bg-primary/80 transition-all duration-300 hover:bg-primary"
@@ -388,7 +406,7 @@ function MonthlyChart({
               {perMonth.map((row) => (
                 <div key={row.key} className="flex items-center justify-between px-3 py-1.5">
                   <span className="text-sm text-muted-foreground capitalize">
-                    {formatYearMonthFr(row.key)}
+                    {formatYearMonth(row.key, locale)}
                   </span>
                   <div className="flex items-center gap-3">
                     <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
@@ -445,8 +463,12 @@ const PAGE_SIZE_OPTIONS = [15, 25, 50] as const;
 
 function RecentDaysList({
   perDay,
+  locale,
+  t,
 }: {
   perDay: Array<{ day: string; count: number }>;
+  locale: string;
+  t: (key: string, options?: any) => string;
 }) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [page, setPage] = React.useState(0);
@@ -457,9 +479,9 @@ function RecentDaysList({
     if (!q) return perDay;
     return perDay.filter((row) => {
       if (row.day.toLowerCase().includes(q)) return true;
-      return formatDayLabel(row.day).toLowerCase().includes(q);
+      return formatDayLabel(row.day, locale).toLowerCase().includes(q);
     });
-  }, [perDay, searchQuery]);
+  }, [perDay, searchQuery, locale]);
 
   React.useEffect(() => {
     setPage(0);
@@ -502,7 +524,7 @@ function RecentDaysList({
   if (perDay.length === 0)
     return (
       <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-        No day with creation recorded.
+        {t("common.dashboard.adminUser.recentDays.empty")}
       </div>
     );
 
@@ -513,15 +535,17 @@ function RecentDaysList({
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Filter (ex. 2024-03, Mar. 15…)"
+            placeholder={t("common.dashboard.adminUser.recentDays.filterPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-9 pl-9"
-            aria-label="Filter the days"
+            aria-label={t("common.dashboard.adminUser.recentDays.filterAria")}
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">Lines per page</span>
+          <span className="text-xs text-muted-foreground">
+            {t("common.dashboard.adminUser.recentDays.linesPerPage")}
+          </span>
           <Select
             value={String(pageSize)}
             onValueChange={(v) => setPageSize(Number(v))}
@@ -542,31 +566,38 @@ function RecentDaysList({
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-          <span>No day corresponds to « {searchQuery.trim()} ».</span>
+          <span>
+            {t("common.dashboard.adminUser.recentDays.noMatch", {
+              query: searchQuery.trim(),
+            })}
+          </span>
           <Button
             type="button"
             variant="link"
             className="h-auto p-0 text-xs"
             onClick={() => setSearchQuery("")}
           >
-            Clear the filter
+            {t("common.dashboard.adminUser.recentDays.clearFilter")}
           </Button>
         </div>
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span>
-              <span className="font-medium text-foreground">{filtered.length}</span> day
-              {filtered.length !== 1 ? "s" : ""}
-              {searchQuery.trim() ? " (filtered)" : ""} · total{" "}
-              <span className="font-medium text-foreground tabular-nums">{totalSheetsInFilter}</span>{" "}
-              sheet{totalSheetsInFilter !== 1 ? "s" : ""}
+              {t("common.dashboard.adminUser.recentDays.summary", {
+                days: filtered.length,
+                sheets: totalSheetsInFilter,
+                filteredLabel: searchQuery.trim()
+                  ? t("common.dashboard.adminUser.recentDays.filteredSuffix")
+                  : "",
+              })}
             </span>
             {peak ? (
               <span className="hidden sm:inline">
-                Peak :{" "}
-                <span className="font-medium text-foreground tabular-nums">{peak.count}</span> on{" "}
-                {formatDayLabel(peak.day)}
+                {t("common.dashboard.adminUser.recentDays.peak", {
+                  count: peak.count,
+                  day: formatDayLabel(peak.day, locale),
+                })}
               </span>
             ) : null}
           </div>
@@ -575,9 +606,15 @@ function RecentDaysList({
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[min(52%,320px)]">Day</TableHead>
-                  <TableHead className="hidden min-w-[120px] sm:table-cell">Intensity (relative to the filter)</TableHead>
-                  <TableHead className="hidden w-20 text-right sm:table-cell">Sheets</TableHead>
+                  <TableHead className="w-[min(52%,320px)]">
+                    {t("common.dashboard.adminUser.recentDays.day")}
+                  </TableHead>
+                  <TableHead className="hidden min-w-[120px] sm:table-cell">
+                    {t("common.dashboard.adminUser.recentDays.intensity")}
+                  </TableHead>
+                  <TableHead className="hidden w-20 text-right sm:table-cell">
+                    {t("common.dashboard.adminUser.recentDays.sheets")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -589,7 +626,7 @@ function RecentDaysList({
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between gap-3 sm:justify-start">
                             <span className="font-medium leading-tight text-foreground">
-                              {formatDayLabel(row.day)}
+                              {formatDayLabel(row.day, locale)}
                             </span>
                             <span className="tabular-nums text-sm font-semibold sm:hidden">
                               {row.count}
@@ -623,7 +660,11 @@ function RecentDaysList({
 
           <div className="flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-center text-xs text-muted-foreground sm:text-left">
-              {rangeStart}–{rangeEnd} of {filtered.length}
+              {t("common.dashboard.adminUser.recentDays.range", {
+                start: rangeStart,
+                end: rangeEnd,
+                total: filtered.length,
+              })}
             </p>
             <div className="flex items-center justify-center gap-1">
               <Button
@@ -633,7 +674,7 @@ function RecentDaysList({
                 className="size-8"
                 onClick={goFirst}
                 disabled={safePage <= 0}
-                aria-label="First page"
+                aria-label={t("common.dashboard.adminUser.recentDays.firstPageAria")}
               >
                 <ChevronsLeft className="size-4" />
               </Button>
@@ -644,12 +685,15 @@ function RecentDaysList({
                 className="size-8"
                 onClick={goPrev}
                 disabled={safePage <= 0}
-                aria-label="Previous page"
+                aria-label={t("common.dashboard.adminUser.recentDays.prevPageAria")}
               >
                 <ChevronLeft className="size-4" />
               </Button>
               <span className="min-w-[100px] px-2 text-center text-xs tabular-nums text-foreground">
-                Page {safePage + 1} / {pageCount}
+                {t("common.dashboard.adminUser.recentDays.page", {
+                  page: safePage + 1,
+                  total: pageCount,
+                })}
               </span>
               <Button
                 type="button"
@@ -658,7 +702,7 @@ function RecentDaysList({
                 className="size-8"
                 onClick={goNext}
                 disabled={safePage >= pageCount - 1}
-                aria-label="Next page"
+                aria-label={t("common.dashboard.adminUser.recentDays.nextPageAria")}
               >
                 <ChevronRight className="size-4" />
               </Button>
@@ -669,7 +713,7 @@ function RecentDaysList({
                 className="size-8"
                 onClick={goLast}
                 disabled={safePage >= pageCount - 1}
-                aria-label="Last page"
+                aria-label={t("common.dashboard.adminUser.recentDays.lastPageAria")}
               >
                 <ChevronsRight className="size-4" />
               </Button>
@@ -683,6 +727,22 @@ function RecentDaysList({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function AdminUserPageView({ userId }: { userId: string }) {
+  const { t, i18n } = useTranslation("common");
+  const prefix = useLocalePrefix();
+  const locale = i18n.language?.split("-")[0] || "en";
+
+  const fetcher = React.useCallback(
+    async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || t("common.dashboard.adminUser.loadFailed"));
+      }
+      return (await res.json()) as UserStatsResponse;
+    },
+    [t],
+  );
+
   const { data, error, isLoading, mutate } = useSWR<UserStatsResponse>(
     `/api/admin/user/${userId}/stats`,
     fetcher,
@@ -695,18 +755,19 @@ export default function AdminUserPageView({ userId }: { userId: string }) {
       <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <Link
-            href="/dashboard/admin"
+            href={withLocalePath(prefix, "/dashboard/admin")}
             className="mb-2 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-4" />
-            Return to admin
+            {t("common.dashboard.adminUser.backToAdmin")}
           </Link>
           <div className="mb-1 inline-flex items-center gap-2 text-sm text-muted-foreground">
             <UserRound className="size-4" aria-hidden />
-            User statistics
+            {t("common.dashboard.adminUser.eyebrow")}
           </div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {data?.user?.username ?? `User #${userId}`}
+            {data?.user?.username ??
+              t("common.dashboard.adminUser.fallbackUser", { id: userId })}
           </h1>
           {data?.user?.role && (
             <Badge variant="secondary" className="mt-1.5 capitalize">
@@ -714,8 +775,7 @@ export default function AdminUserPageView({ userId }: { userId: string }) {
             </Badge>
           )}
           <p className="mt-1.5 text-sm text-muted-foreground">
-            All metrics cover the entire history. The created sheets and associated charts only
-            concern sheets created by this user. « Resolved by him » counts all sheets closed by him (regardless of the author).
+            {t("common.dashboard.adminUser.description")}
           </p>
         </div>
          
@@ -725,7 +785,7 @@ export default function AdminUserPageView({ userId }: { userId: string }) {
       {error ? (
         <Card className="border-destructive/30">
           <CardContent className="pt-6 text-sm text-destructive">
-            {(error as Error).message || "Unable to load statistics."}
+            {(error as Error).message || t("common.dashboard.adminUser.loadError")}
           </CardContent>
         </Card>
       ) : null}
@@ -734,7 +794,7 @@ export default function AdminUserPageView({ userId }: { userId: string }) {
       {isLoading && !data ? (
         <div className="flex min-h-[30vh] items-center justify-center gap-2 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
-          Loading…
+          {t("common.dashboard.adminUser.loading")}
         </div>
       ) : null}
 
@@ -744,24 +804,24 @@ export default function AdminUserPageView({ userId }: { userId: string }) {
           {/* Stat cards */}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
-              label="Sheets created by him (total)"
+              label={t("common.dashboard.adminUser.stats.createdTotal")}
               value={data.overview.total}
               icon={TrendingUp}
             />
             <StatCard
-              label="Pending (among these sheets)"
+              label={t("common.dashboard.adminUser.stats.pendingAmong")}
               value={data.overview.pending}
               icon={Clock}
               colorClass="border-amber-500/30 bg-amber-500/5"
             />
             <StatCard
-              label="Closed (among these sheets)"
+              label={t("common.dashboard.adminUser.stats.closedAmong")}
               value={data.overview.resolved}
               icon={CheckCircle2}
               colorClass="border-emerald-500/30 bg-emerald-500/5"
             />
             <StatCard
-              label="Resolved by him — all sheets (total)"
+              label={t("common.dashboard.adminUser.stats.resolvedByUserTotal")}
               value={data.overview.resolvedByThisUser}
               icon={BadgeCheck}
             />
@@ -769,8 +829,8 @@ export default function AdminUserPageView({ userId }: { userId: string }) {
 
           {/* Calendar + monthly chart */}
           <div className="grid gap-4 xl:grid-cols-2">
-            <ActivityCalendar perDay={data.perDay} />
-            <MonthlyChart perMonth={data.perMonth} />
+            <ActivityCalendar perDay={data.perDay} locale={locale} t={t} />
+            <MonthlyChart perMonth={data.perMonth} locale={locale} t={t} />
           </div>
 
           {/* Recent daily activity */}
@@ -779,19 +839,21 @@ export default function AdminUserPageView({ userId }: { userId: string }) {
               <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">
-                    Activity by day
+                    {t("common.dashboard.adminUser.recentDays.title")}
                   </CardTitle>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Created sheets by day (recent first). Filtering and pagination for large volumes.
+                    {t("common.dashboard.adminUser.recentDays.subtitle")}
                   </p>
                 </div>
                 <Badge variant="secondary" className="shrink-0 self-start text-xs font-normal">
-                  {data.perDay.length} days ({data.perDay.length !== 1 ? "s" : ""})
+                  {t("common.dashboard.adminUser.recentDays.daysBadge", {
+                    days: data.perDay.length,
+                  })}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
-              <RecentDaysList perDay={data.perDay} />
+              <RecentDaysList perDay={data.perDay} locale={locale} t={t} />
             </CardContent>
           </Card>
         </>

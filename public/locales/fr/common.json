@@ -353,6 +353,60 @@
         "resetPassword": "Réinitialiser",
         "resetting": "Réinitialisation…",
         "passwordResetFailed": "Échec de la réinitialisation"
+      },
+      "adminUser": {
+        "backToAdmin": "Retour à l'administration",
+        "eyebrow": "Statistiques utilisateur",
+        "fallbackUser": "Utilisateur n°{{id}}",
+        "description": "Toutes les métriques couvrent l'historique complet. Les fiches créées et les graphiques associés concernent uniquement les fiches créées par cet utilisateur. « Résolu par lui » compte toutes les fiches clôturées par lui (quel que soit l'auteur).",
+        "loadFailed": "Échec du chargement des statistiques utilisateur",
+        "loadError": "Impossible de charger les statistiques.",
+        "loading": "Chargement…",
+        "stats": {
+          "createdTotal": "Fiches créées par lui (total)",
+          "pendingAmong": "En attente (parmi ces fiches)",
+          "closedAmong": "Clôturées (parmi ces fiches)",
+          "resolvedByUserTotal": "Résolues par lui — toutes les fiches (total)"
+        },
+        "calendar": {
+          "title": "Calendrier (fiches créées)",
+          "prevMonthAria": "Mois précédent",
+          "nextMonthAria": "Mois suivant",
+          "periodHint": "Données pour toute la période : {{range}}. Chaque jour affiché utilise tout l'historique — changez de mois pour parcourir la période.",
+          "dayTooltipWithCount": "{{date}} : {{count}} fiche(s) créée(s)",
+          "lastActiveMonth": "Dernier mois actif",
+          "firstActiveMonth": "Premier mois actif",
+          "less": "Moins",
+          "more": "Plus"
+        },
+        "monthly": {
+          "title": "Répartition mensuelle (fiches créées, historique complet)",
+          "subtitle": "Un histogramme mensuel avec au moins une création ({{months}} mois).",
+          "empty": "Aucune fiche créée."
+        },
+        "recentDays": {
+          "title": "Activité par jour",
+          "subtitle": "Fiches créées par jour (les plus récentes d'abord). Filtrage et pagination pour les grands volumes.",
+          "daysBadge": "{{days}} jour(s)",
+          "empty": "Aucun jour avec création enregistrée.",
+          "filterPlaceholder": "Filtrer (ex. 2024-03, 15 mars…)",
+          "filterAria": "Filtrer les jours",
+          "linesPerPage": "Lignes par page",
+          "noMatch": "Aucun jour ne correspond à « {{query}} ».",
+          "clearFilter": "Effacer le filtre",
+          "filteredSuffix": " (filtré)",
+          "summary": "{{days}} jour(s){{filteredLabel}} · total {{sheets}} fiche(s)",
+          "peak": "Pic : {{count}} le {{day}}",
+          "day": "Jour",
+          "intensity": "Intensité (relative au filtre)",
+          "sheets": "Fiches",
+          "range": "{{start}}–{{end}} sur {{total}}",
+          "firstPageAria": "Première page",
+          "prevPageAria": "Page précédente",
+          "nextPageAria": "Page suivante",
+          "lastPageAria": "Dernière page",
+          "page": "Page {{page}} / {{total}}"
+        }
       }
     }
   },

@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -24,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 
@@ -86,8 +88,13 @@ function StarDisplay({
   value: number | null;
   size?: "sm" | "md";
 }) {
+  const { t } = useTranslation("common");
   if (value === null)
-    return <span className="text-xs text-muted-foreground">Not rated</span>;
+    return (
+      <span className="text-xs text-muted-foreground">
+        {t("common.dashboard.customerDetail.rating.notRated")}
+      </span>
+    );
 
   const rounded = Math.round(value * 2) / 2;
   const starSize = size === "md" ? "size-4" : "size-3";
@@ -131,33 +138,34 @@ function StarDisplay({
 }
 
 function ReputationBadge({ avg }: { avg: number | null }) {
+  const { t } = useTranslation("common");
   if (avg === null)
     return (
       <Badge variant="outline" className="text-xs">
-        Unrated
+        {t("common.dashboard.customerDetail.rating.unrated")}
       </Badge>
     );
   if (avg >= 4.5)
     return (
       <Badge className="bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border-0">
-        Excellent
+        {t("common.dashboard.customerDetail.rating.excellent")}
       </Badge>
     );
   if (avg >= 3.5)
     return (
       <Badge className="bg-sky-500/15 text-sky-800 dark:text-sky-200 border-0">
-        Good
+        {t("common.dashboard.customerDetail.rating.good")}
       </Badge>
     );
   if (avg >= 2.5)
     return (
       <Badge className="bg-amber-500/15 text-amber-800 dark:text-amber-200 border-0">
-        Average
+        {t("common.dashboard.customerDetail.rating.average")}
       </Badge>
     );
   return (
     <Badge className="bg-red-500/15 text-red-800 dark:text-red-200 border-0">
-      Poor
+      {t("common.dashboard.customerDetail.rating.poor")}
     </Badge>
   );
 }
@@ -194,14 +202,17 @@ function StatPill({
 
 function CallTimelineItem({
   call,
-  index,
 }: {
   call: CustomerCall;
-  index: number;
 }) {
+  const { t } = useTranslation("common");
   const [expanded, setExpanded] = React.useState(false);
   const isPending = call.status === "pending";
   const hasDetails = call.problemDescription || call.observation;
+
+  const statusLabel = isPending
+    ? t("common.dashboard.calls.statusPending")
+    : t("common.dashboard.calls.statusResolved");
 
   return (
     <div className="relative flex gap-4">
@@ -241,7 +252,7 @@ function CallTimelineItem({
                   : "bg-emerald-600/15 text-emerald-900 dark:text-emerald-100",
               )}
             >
-              {call.status}
+              {statusLabel}
             </Badge>
             {call.problemType && (
               <span className="text-xs text-muted-foreground">
@@ -269,7 +280,9 @@ function CallTimelineItem({
           {call.resolvedBy && (
             <span className="flex items-center gap-1">
               <CheckCircle2 className="size-3" />
-              resolved by {call.resolvedBy.username}
+              {t("common.dashboard.customerDetail.resolvedBy", {
+                user: call.resolvedBy.username,
+              })}
             </span>
           )}
         </div>
@@ -281,14 +294,16 @@ function CallTimelineItem({
               className="mt-2 text-xs text-primary underline-offset-2 hover:underline"
               onClick={() => setExpanded((v) => !v)}
             >
-              {expanded ? "Hide details" : "Show details"}
+              {expanded
+                ? t("common.dashboard.customerDetail.hideDetails")
+                : t("common.dashboard.customerDetail.showDetails")}
             </button>
             {expanded && (
               <div className="mt-2 grid gap-2 text-sm">
                 {call.problemDescription && (
                   <div className="rounded-md bg-muted/40 px-3 py-2">
                     <p className="text-xs font-medium text-muted-foreground mb-0.5">
-                      Description
+                      {t("common.dashboard.calls.dialog.description")}
                     </p>
                     <p className="whitespace-pre-wrap">
                       {call.problemDescription}
@@ -298,7 +313,7 @@ function CallTimelineItem({
                 {call.observation && (
                   <div className="rounded-md bg-muted/40 px-3 py-2">
                     <p className="text-xs font-medium text-muted-foreground mb-0.5">
-                      Observation
+                      {t("common.dashboard.calls.dialog.observation")}
                     </p>
                     <p className="whitespace-pre-wrap">{call.observation}</p>
                   </div>
@@ -315,8 +330,10 @@ function CallTimelineItem({
 /* ─── Main page ──────────────────────────────────────────────── */
 
 export default function CustomerDetailPage() {
+  const { t, i18n } = useTranslation("common");
   const params = useParams();
   const id = params?.id as string;
+  const prefix = useLocalePrefix();
 
   const [customer, setCustomer] = React.useState<Customer | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -339,7 +356,7 @@ export default function CustomerDetailPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-2 text-muted-foreground">
         <Loader2 className="size-5 animate-spin" />
-        Loading customer…
+        {t("common.dashboard.customerDetail.loading")}
       </div>
     );
   }
@@ -347,13 +364,13 @@ export default function CustomerDetailPage() {
   if (error || !customer) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-muted-foreground">
-        <p>Customer not found.</p>
+        <p>{t("common.dashboard.customerDetail.notFound")}</p>
         <Link
-          href="/dashboard/customers"
+          href={withLocalePath(prefix, "/dashboard/customers")}
           className={buttonVariants({ variant: "outline" })}
         >
           <ArrowLeft className="mr-2 size-4" />
-          Back to customers
+          {t("common.dashboard.customerDetail.backToCustomers")}
         </Link>
       </div>
     );
@@ -385,11 +402,11 @@ export default function CustomerDetailPage() {
     <div className="space-y-6 p-4">
       {/* Back */}
       <Link
-        href="/dashboard/customers"
+        href={withLocalePath(prefix, "/dashboard/customers")}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="size-4" />
-        All customers
+        {t("common.dashboard.customerDetail.allCustomers")}
       </Link>
 
       {/* ── Profile header ── */}
@@ -420,7 +437,9 @@ export default function CustomerDetailPage() {
             <StarDisplay value={avg} size="md" />
             {ratedCount > 0 && (
               <span className="text-xs text-muted-foreground">
-                based on {ratedCount} rated call{ratedCount !== 1 ? "s" : ""}
+                {t("common.dashboard.customerDetail.basedOnRatedCalls", {
+                  count: ratedCount,
+                })}
               </span>
             )}
           </div>
@@ -431,12 +450,23 @@ export default function CustomerDetailPage() {
       <Card>
         <CardContent className="p-0">
           <div className="grid grid-cols-2 divide-x divide-y sm:grid-cols-4 sm:divide-y-0">
-            <StatPill label="Total calls" value={customer._count.callSheets} />
-            <StatPill label="Resolved" value={resolved} accent="emerald" />
-            <StatPill label="Pending" value={pending} accent="amber" />
             <StatPill
-              label="Avg. rating"
-              value={avg !== null ? `${avg.toFixed(1)} / 5` : "—"}
+              label={t("common.dashboard.customerDetail.stats.totalCalls")}
+              value={customer._count.callSheets}
+            />
+            <StatPill
+              label={t("common.dashboard.customerDetail.stats.resolved")}
+              value={resolved}
+              accent="emerald"
+            />
+            <StatPill
+              label={t("common.dashboard.customerDetail.stats.pending")}
+              value={pending}
+              accent="amber"
+            />
+            <StatPill
+              label={t("common.dashboard.customerDetail.stats.avgRating")}
+              value={avg !== null ? `${avg.toFixed(1)} / 5` : t("common.dashboard.customerDetail.dash")}
               accent={
                 avg !== null
                   ? avg >= 3.5
@@ -456,27 +486,29 @@ export default function CustomerDetailPage() {
         {/* Contact info */}
         <Card>
           <CardHeader className="pb-3">
-            <p className="text-sm font-semibold">Contact information</p>
+            <p className="text-sm font-semibold">
+              {t("common.dashboard.customerDetail.sections.contactInformation")}
+            </p>
           </CardHeader>
           <CardContent className="grid gap-3 text-sm">
             <InfoRow
               icon={<User className="size-3.5" />}
-              label="Contact"
+              label={t("common.dashboard.customerDetail.fields.contact")}
               value={customer.CONTACT}
             />
             <InfoRow
               icon={<Phone className="size-3.5" />}
-              label="Phone"
+              label={t("common.dashboard.customerDetail.fields.phone")}
               value={customer.TEL}
             />
             <InfoRow
               icon={<Mail className="size-3.5" />}
-              label="Email"
+              label={t("common.dashboard.customerDetail.fields.email")}
               value={customer.EMAIL}
             />
             <InfoRow
               icon={<MapPin className="size-3.5" />}
-              label="Location"
+              label={t("common.dashboard.customerDetail.fields.location")}
               value={
                 [customer.COMMUNE, customer.WILAYA]
                   .filter(Boolean)
@@ -485,7 +517,7 @@ export default function CustomerDetailPage() {
             />
             <InfoRow
               icon={<Building2 className="size-3.5" />}
-              label="Address"
+              label={t("common.dashboard.customerDetail.fields.address")}
               value={customer.ADRESSE}
             />
           </CardContent>
@@ -494,37 +526,39 @@ export default function CustomerDetailPage() {
         {/* Financial info */}
         <Card>
           <CardHeader className="pb-3">
-            <p className="text-sm font-semibold">Account details</p>
+            <p className="text-sm font-semibold">
+              {t("common.dashboard.customerDetail.sections.accountDetails")}
+            </p>
           </CardHeader>
           <CardContent className="grid gap-3 text-sm">
             <InfoRow
               icon={<CreditCard className="size-3.5" />}
-              label="Balance (Solde)"
+              label={t("common.dashboard.customerDetail.fields.balance")}
               value={
                 customer.SOLDE !== undefined && customer.SOLDE !== null
-                  ? Number(customer.SOLDE).toLocaleString(undefined, {
+                  ? Number(customer.SOLDE).toLocaleString(i18n.language || undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    }) + " DA"
+                    }) + ` ${t("common.dashboard.customerDetail.currency")}`
                   : null
               }
             />
             <InfoRow
               icon={<CreditCard className="size-3.5" />}
-              label="Credit limit"
+              label={t("common.dashboard.customerDetail.fields.creditLimit")}
               value={
                 customer.CREDIT_LIMIT != null
-                  ? Number(customer.CREDIT_LIMIT).toLocaleString(undefined, {
+                  ? Number(customer.CREDIT_LIMIT).toLocaleString(i18n.language || undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    }) + " DA"
+                    }) + ` ${t("common.dashboard.customerDetail.currency")}`
                   : null
               }
             />
             {customer.NOTES && (
               <div className="rounded-md bg-muted/40 px-3 py-2 text-sm">
                 <p className="text-xs font-medium text-muted-foreground mb-0.5">
-                  Notes
+                  {t("common.dashboard.customerDetail.fields.notes")}
                 </p>
                 <p className="whitespace-pre-wrap">{customer.NOTES}</p>
               </div>
@@ -538,7 +572,7 @@ export default function CustomerDetailPage() {
         <CardHeader className="flex flex-row items-center gap-2 pb-4">
           <PhoneCall className="size-4 text-muted-foreground" />
           <p className="text-sm font-semibold">
-            Call history
+            {t("common.dashboard.customerDetail.sections.callHistory")}
             <span className="ml-2 font-normal text-muted-foreground">
               ({customer._count.callSheets})
             </span>
@@ -547,12 +581,12 @@ export default function CustomerDetailPage() {
         <CardContent>
           {sortedCalls.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No calls recorded for this customer.
+              {t("common.dashboard.customerDetail.noCalls")}
             </p>
           ) : (
             <div className="pt-1">
               {sortedCalls.map((call, i) => (
-                <CallTimelineItem key={call.id} call={call} index={i} />
+                <CallTimelineItem key={call.id} call={call} />
               ))}
             </div>
           )}
@@ -573,12 +607,15 @@ function InfoRow({
   label: string;
   value: string | null | undefined;
 }) {
+  const { t } = useTranslation("common");
   return (
     <div className="flex items-start gap-2">
       <span className="mt-0.5 text-muted-foreground">{icon}</span>
       <div className="flex-1 min-w-0">
         <span className="text-xs text-muted-foreground">{label}</span>
-        <p className="font-medium truncate">{value || "—"}</p>
+        <p className="font-medium truncate">
+          {value || t("common.dashboard.customerDetail.dash")}
+        </p>
       </div>
     </div>
   );

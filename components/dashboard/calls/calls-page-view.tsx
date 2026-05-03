@@ -54,6 +54,8 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
+import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
+import { useTranslation } from "react-i18next";
 
 export type CallSheetRow = {
   id: number;
@@ -74,8 +76,15 @@ export type CallSheetRow = {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-function statusBadge(status: string) {
+function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation("common");
   const pending = status === "pending";
+  const label =
+    status === "pending"
+      ? t("common.dashboard.calls.statusPending")
+      : status === "resolved"
+        ? t("common.dashboard.calls.statusResolved")
+        : status;
   return (
     <Badge
       variant={pending ? "secondary" : "default"}
@@ -92,14 +101,14 @@ function statusBadge(status: string) {
       ) : (
         <CheckCircle2 className="mr-1 size-3" aria-hidden />
       )}
-      {status}
+      {label}
     </Badge>
   );
 }
 
-function formatDate(iso: string) {
+function formatDate(iso: string, locale?: string) {
   try {
-    return new Date(iso).toLocaleString(undefined, {
+    return new Date(iso).toLocaleString(locale || undefined, {
       dateStyle: "medium",
       timeStyle: "short",
     });
@@ -182,6 +191,8 @@ function CallDetailsDialog({
   currentUserId: number | null;
   onResolved: () => void;
 }) {
+  const { t, i18n } = useTranslation("common");
+  const prefix = useLocalePrefix();
   const [open, setOpen] = React.useState(false);
   const [resolving, setResolving] = React.useState(false);
   const [creatingBon, setCreatingBon] = React.useState(false);
@@ -253,12 +264,12 @@ function CallDetailsDialog({
       );
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setUploadError((data?.error as string) ?? "Upload failed");
+        setUploadError((data?.error as string) ?? t("common.dashboard.calls.dialog.uploadFailed"));
         return;
       }
       await fetchPictures();
     } catch {
-      setUploadError("Upload failed — network error");
+      setUploadError(t("common.dashboard.calls.dialog.uploadNetwork"));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -363,50 +374,53 @@ function CallDetailsDialog({
         size="sm"
         onClick={() => setOpen(true)}
       >
-        Details
+        {t("common.dashboard.calls.dialog.details")}
       </Button>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Call #{row.id}</DialogTitle>
+          <DialogTitle>{t("common.dashboard.calls.dialog.title", { id: row.id })}</DialogTitle>
           <DialogDescription>
-            {row.customer.CLIENT} · Logged {formatDate(row.createdAt)}
+            {row.customer.CLIENT} ·{" "}
+            {t("common.dashboard.calls.dialog.loggedAt", {
+              date: formatDate(row.createdAt, i18n.language),
+            })}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground">Status</span>
-            {statusBadge(row.status)}
+            <span className="text-muted-foreground">{t("common.dashboard.calls.dialog.status")}</span>
+            <StatusBadge status={row.status} />
           </div>
           <dl className="grid gap-3 rounded-lg border bg-muted/30 p-4">
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Customer
+                {t("common.dashboard.calls.dialog.customer")}
               </dt>
               <dd className="mt-0.5 font-medium">{row.customer.CLIENT}</dd>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Number
+                  {t("common.dashboard.calls.dialog.number")}
                 </dt>
                 <dd className="mt-0.5">{row.callNumber || "—"}</dd>
               </div>
               <div>
                 <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  SIM / line
+                  {t("common.dashboard.calls.dialog.simLine")}
                 </dt>
                 <dd className="mt-0.5">{row.callSim || "—"}</dd>
               </div>
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Problem type
+                {t("common.dashboard.calls.dialog.problemType")}
               </dt>
               <dd className="mt-0.5">{row.problemType || "—"}</dd>
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Description
+                {t("common.dashboard.calls.dialog.description")}
               </dt>
               <dd className="mt-0.5 whitespace-pre-wrap">
                 {row.problemDescription || "—"}
@@ -414,7 +428,7 @@ function CallDetailsDialog({
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Observation
+                {t("common.dashboard.calls.dialog.observation")}
               </dt>
               <dd className="mt-0.5 whitespace-pre-wrap">
                 {row.observation || "—"}
@@ -422,13 +436,13 @@ function CallDetailsDialog({
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Created by
+                {t("common.dashboard.calls.dialog.createdBy")}
               </dt>
               <dd className="mt-0.5">{row.user.username}</dd>
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Call Rating
+                {t("common.dashboard.calls.dialog.callRating")}
               </dt>
               <dd className="mt-1.5 flex items-center gap-2">
                 <StarRating
@@ -446,7 +460,7 @@ function CallDetailsDialog({
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                 <ImageIcon className="size-3.5" />
-                Pictures
+                {t("common.dashboard.calls.dialog.pictures")}
                 {pictures.length > 0 && (
                   <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
                     {pictures.length}
@@ -466,7 +480,7 @@ function CallDetailsDialog({
                 ) : (
                   <Upload className="size-3.5" />
                 )}
-                {uploading ? "Uploading…" : "Add"}
+                {uploading ? t("common.dashboard.calls.dialog.uploading") : t("common.dashboard.calls.dialog.add")}
               </Button>
               <input
                 ref={fileInputRef}
@@ -488,7 +502,7 @@ function CallDetailsDialog({
               </div>
             ) : pictures.length === 0 ? (
               <p className="py-2 text-center text-xs text-muted-foreground">
-                No pictures yet.
+                {t("common.dashboard.calls.dialog.noPictures")}
               </p>
             ) : (
               <div className="grid grid-cols-3 gap-2">
@@ -506,7 +520,7 @@ function CallDetailsDialog({
                     />
                     <button
                       type="button"
-                      aria-label="Delete picture"
+                      aria-label={t("common.dashboard.calls.dialog.deletePictureAria")}
                       className="absolute right-1 top-1 hidden rounded-full bg-background/80 p-0.5 text-destructive shadow group-hover:flex items-center justify-center"
                       disabled={deletingId === pic.id}
                       onClick={() => void handleDeletePicture(pic.id)}
@@ -548,7 +562,7 @@ function CallDetailsDialog({
           <div className="grid gap-2">
             <div className="rounded-lg border bg-muted/20 p-3">
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Bon Firebird
+                {t("common.dashboard.calls.dialog.bonTitle")}
               </p>
               <div className="grid gap-2">
                 <div className="grid grid-cols-3 gap-2">
@@ -556,28 +570,28 @@ function CallDetailsDialog({
                     <Input
                       value={article}
                       onChange={(e) => setArticle(e.target.value)}
-                      placeholder="Article (ex: Intervention / Pièce / Service...)"
+                      placeholder={t("common.dashboard.calls.dialog.articlePlaceholder")}
                     />
                   </div>
                   <div className="flex flex-col col-span-1 gap-2">
-                    <Label>Quantité</Label>
+                    <Label>{t("common.dashboard.calls.dialog.quantity")}</Label>
                     <Input
                       value={String(qte)}
                       onChange={(e) => setQte(Number(e.target.value))}
-                      placeholder="Qte"
+                      placeholder={t("common.dashboard.calls.dialog.quantityPlaceholder")}
                     />
                   </div>
                   <div className="flex flex-col col-span-1 gap-2">
-                    <Label>Prix</Label>
+                    <Label>{t("common.dashboard.calls.dialog.price")}</Label>
                     <Input
                       value={String(pvHtAr)}
                       onChange={(e) => setPvHtAr(Number(e.target.value))}
-                      placeholder="PV HT"
+                      placeholder={t("common.dashboard.calls.dialog.pricePlaceholder")}
                     />
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Total HT:{" "}
+                  {t("common.dashboard.calls.dialog.totalHt")}{" "}
                   <span className="font-mono">
                     {Number.isFinite(qte) && Number.isFinite(pvHtAr)
                       ? (qte * pvHtAr).toFixed(2)
@@ -595,14 +609,14 @@ function CallDetailsDialog({
               {creatingBon ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Creating...
+                  {t("common.dashboard.calls.dialog.creating")}
                 </>
               ) : row.isSynced ? (
-                "Already synchronized"
+                t("common.dashboard.calls.dialog.alreadySynchronized")
               ) : row.status !== "resolved" ? (
-                "Resolve before sync"
+                t("common.dashboard.calls.dialog.resolveBeforeSync")
               ) : (
-                "Create a Firebird note"
+                t("common.dashboard.calls.dialog.createFirebirdNote")
               )}
             </Button>
             {bonResult ? (
@@ -612,13 +626,13 @@ function CallDetailsDialog({
             ) : null}
           </div>
           <Link
-            href="/dashboard/customers"
+            href={withLocalePath(prefix, "/dashboard/customers")}
             className={buttonVariants({
               variant: "link",
               className: "h-auto min-h-0 p-0 text-sm font-normal",
             })}
           >
-            View customers directory
+            {t("common.dashboard.calls.dialog.viewCustomersDirectory")}
           </Link>
         </div>
         {canResolve && (
@@ -632,12 +646,12 @@ function CallDetailsDialog({
               {resolving ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Resolving…
+                  {t("common.dashboard.calls.dialog.resolving")}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="size-4" />
-                  Mark as resolved
+                  {t("common.dashboard.calls.dialog.markResolved")}
                 </>
               )}
             </Button>
@@ -649,6 +663,8 @@ function CallDetailsDialog({
 }
 
 export default function CallsPageView() {
+  const { t } = useTranslation("common");
+  const prefix = useLocalePrefix();
   const { data: session, status: sessionStatus } = useSession();
   const currentUserId = session?.user?.id
     ? parseInt(session.user.id, 10)
@@ -705,7 +721,7 @@ export default function CallsPageView() {
     () => [
       {
         accessorKey: "id",
-        header: "ID",
+        header: t("common.dashboard.calls.colId"),
         cell: ({ getValue }) => (
           <span className="font-mono text-xs tabular-nums text-muted-foreground">
             #{getValue() as number}
@@ -716,7 +732,7 @@ export default function CallsPageView() {
       {
         id: "customer",
         accessorFn: (r) => r.customer?.CLIENT ?? "",
-        header: "Customer",
+        header: t("common.dashboard.calls.colCustomer"),
         cell: ({ row }) => (
           <span className="max-w-[160px] truncate font-medium">
             {row.original.customer?.CLIENT ?? "—"}
@@ -725,7 +741,7 @@ export default function CallsPageView() {
       },
       {
         accessorKey: "callNumber",
-        header: "Number",
+        header: t("common.dashboard.calls.colNumber"),
         cell: ({ getValue }) => (
           <span className="tabular-nums">
             {(getValue() as string | null) || "—"}
@@ -734,7 +750,7 @@ export default function CallsPageView() {
       },
       {
         accessorKey: "callSim",
-        header: "Line",
+        header: t("common.dashboard.calls.colLine"),
         cell: ({ getValue }) => (
           <Badge variant="outline" className="font-normal">
             {(getValue() as string | null) || "—"}
@@ -743,7 +759,7 @@ export default function CallsPageView() {
       },
       {
         accessorKey: "problemType",
-        header: "Problem",
+        header: t("common.dashboard.calls.colProblem"),
         cell: ({ getValue }) => (
           <span
             className="max-w-[140px] truncate"
@@ -755,7 +771,7 @@ export default function CallsPageView() {
       },
       {
         accessorKey: "observation",
-        header: "Observation",
+        header: t("common.dashboard.calls.colObservation"),
         cell: ({ getValue }) => (
           <span
             className="max-w-[180px] truncate text-muted-foreground"
@@ -768,7 +784,7 @@ export default function CallsPageView() {
       {
         id: "createdBy",
         accessorFn: (r) => r.user?.username ?? "",
-        header: "Created by",
+        header: t("common.dashboard.calls.colCreatedBy"),
         cell: ({ row }) => (
           <span className="text-muted-foreground">
             {row.original.user?.username ?? "—"}
@@ -777,12 +793,12 @@ export default function CallsPageView() {
       },
       {
         accessorKey: "status",
-        header: "Status",
-        cell: ({ getValue }) => statusBadge(getValue() as string),
+        header: t("common.dashboard.calls.colStatus"),
+        cell: ({ getValue }) => <StatusBadge status={getValue() as string} />,
       },
       {
         accessorKey: "rate",
-        header: "Rating",
+        header: t("common.dashboard.calls.colRating"),
         cell: ({ getValue }) => {
           const v = (getValue() as number | null) ?? 0;
           return v > 0 ? (
@@ -796,22 +812,22 @@ export default function CallsPageView() {
       {
         id: "sync",
         accessorFn: (r) => (r.isSynced ? "synced" : "not_synced"),
-        header: "Sync",
+        header: t("common.dashboard.calls.colSync"),
         cell: ({ row }) =>
           row.original.isSynced ? (
             <Badge className="font-normal" variant="default">
-              Synced
+              {t("common.dashboard.calls.synced")}
             </Badge>
           ) : (
             <Badge className="font-normal" variant="secondary">
-              Not synced
+              {t("common.dashboard.calls.notSynced")}
             </Badge>
           ),
         size: 110,
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
+        header: () => <span className="sr-only">{t("common.dashboard.calls.colActions")}</span>,
         cell: ({ row }) => (
           <CallDetailsDialog
             row={row.original}
@@ -821,7 +837,7 @@ export default function CallsPageView() {
         ),
       },
     ],
-    [currentUserId, mutate],
+    [currentUserId, mutate, t],
   );
 
   const table = useReactTable({
@@ -836,7 +852,7 @@ export default function CallsPageView() {
     return (
       <div className="flex min-h-[40vh] items-center justify-center gap-2 text-muted-foreground">
         <Loader2 className="size-6 animate-spin" />
-        Loading…
+        {t("common.dashboard.calls.loading")}
       </div>
     );
   }
@@ -847,12 +863,11 @@ export default function CallsPageView() {
         <div>
           <div className="mb-1 inline-flex items-center gap-2 text-sm text-muted-foreground">
             <Phone className="size-4" aria-hidden />
-            Call sheets
+            {t("common.dashboard.calls.pageEyebrow")}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Calls</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("common.dashboard.calls.pageTitle")}</h1>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            Review support calls, filter by status, and open a row for full
-            details. You can mark your own pending calls as resolved.
+            {t("common.dashboard.calls.pageDescription")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -864,13 +879,13 @@ export default function CallsPageView() {
             disabled={isLoading}
           >
             <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
-            Refresh
+            {t("common.dashboard.calls.refresh")}
           </Button>
           <Link
-            href="/dashboard"
+            href={withLocalePath(prefix, "/dashboard")}
             className={buttonVariants({ variant: "default", size: "sm" })}
           >
-            Back to overview
+            {t("common.dashboard.calls.backOverview")}
           </Link>
         </div>
       </section>
@@ -879,7 +894,7 @@ export default function CallsPageView() {
         <Card>
           <CardHeader className="pb-2">
             <p className="text-sm font-medium text-muted-foreground">
-              Total calls
+              {t("common.dashboard.calls.statTotal")}
             </p>
           </CardHeader>
           <CardContent>
@@ -889,7 +904,7 @@ export default function CallsPageView() {
         <Card className="border-amber-500/20 bg-amber-500/5">
           <CardHeader className="pb-2">
             <p className="text-sm font-medium text-amber-900 dark:text-amber-100/90">
-              Pending
+              {t("common.dashboard.calls.statPending")}
             </p>
           </CardHeader>
           <CardContent>
@@ -901,7 +916,7 @@ export default function CallsPageView() {
         <Card className="border-emerald-500/20 bg-emerald-500/5">
           <CardHeader className="pb-2">
             <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100/90">
-              Resolved
+              {t("common.dashboard.calls.statResolved")}
             </p>
           </CardHeader>
           <CardContent>
@@ -919,17 +934,17 @@ export default function CallsPageView() {
               className="size-4 text-muted-foreground"
               aria-hidden
             />
-            Filters
+            {t("common.dashboard.calls.filters")}
           </div>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search customer, number, problem…"
+                placeholder={t("common.dashboard.calls.searchPlaceholder")}
                 className="pl-9"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                aria-label="Search calls"
+                aria-label={t("common.dashboard.calls.searchAria")}
               />
             </div>
             <Select
@@ -937,12 +952,12 @@ export default function CallsPageView() {
               onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
             >
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t("common.dashboard.calls.statusPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="pending">Pending only</SelectItem>
-                <SelectItem value="resolved">Resolved only</SelectItem>
+                <SelectItem value="all">{t("common.dashboard.calls.statusAll")}</SelectItem>
+                <SelectItem value="pending">{t("common.dashboard.calls.statusPendingOnly")}</SelectItem>
+                <SelectItem value="resolved">{t("common.dashboard.calls.statusResolvedOnly")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -950,13 +965,13 @@ export default function CallsPageView() {
         <CardContent className="p-0">
           {error && (
             <p className="p-6 text-center text-sm text-destructive">
-              Could not load calls. Check your connection and try again.
+              {t("common.dashboard.calls.loadError")}
             </p>
           )}
           {!error && isLoading && (
             <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
               <Loader2 className="size-6 animate-spin" />
-              Loading calls…
+              {t("common.dashboard.calls.loadingCalls")}
             </div>
           )}
           {!error && !isLoading && (
@@ -1006,8 +1021,8 @@ export default function CallsPageView() {
                           className="h-32 text-center text-muted-foreground"
                         >
                           {rows.length === 0
-                            ? "No call sheets yet. Create one from the dashboard."
-                            : "No calls match your filters."}
+                            ? t("common.dashboard.calls.emptyNoSheets")
+                            : t("common.dashboard.calls.emptyNoMatch")}
                         </TableCell>
                       </TableRow>
                     )}
@@ -1016,7 +1031,7 @@ export default function CallsPageView() {
               </div>
               <div className="flex flex-col gap-3 border-t bg-muted/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Showing{" "}
+                  {t("common.dashboard.calls.paginationShowing")}{" "}
                   <span className="font-medium text-foreground">
                     {table.getRowModel().rows.length
                       ? table.getState().pagination.pageIndex *
@@ -1030,12 +1045,12 @@ export default function CallsPageView() {
                       filteredRows.length,
                     )}
                   </span>{" "}
-                  of{" "}
+                  {t("common.dashboard.calls.paginationOf")}{" "}
                   <span className="font-medium text-foreground">
                     {filteredRows.length}
                   </span>
                   {filteredRows.length !== rows.length && (
-                    <span> (filtered from {rows.length})</span>
+                    <span> {t("common.dashboard.calls.paginationFiltered", { count: rows.length })}</span>
                   )}
                 </p>
                 <div className="flex items-center gap-2">
@@ -1046,7 +1061,7 @@ export default function CallsPageView() {
                     onClick={() => table.previousPage()}
                     disabled={!table.getCanPreviousPage()}
                   >
-                    Previous
+                    {t("common.dashboard.calls.previous")}
                   </Button>
                   <Button
                     type="button"
@@ -1055,7 +1070,7 @@ export default function CallsPageView() {
                     onClick={() => table.nextPage()}
                     disabled={!table.getCanNextPage()}
                   >
-                    Next
+                    {t("common.dashboard.calls.next")}
                   </Button>
                 </div>
               </div>

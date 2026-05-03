@@ -24,6 +24,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
+import { useTranslation } from "react-i18next";
 
 type CustomerCall = {
   id: number;
@@ -60,8 +62,11 @@ function avgRating(calls: CustomerCall[]): number | null {
 
 /** Read-only mini star display */
 function StarDisplay({ value }: { value: number | null }) {
+  const { t } = useTranslation("common");
   if (value === null)
-    return <span className="text-xs text-muted-foreground">No ratings</span>;
+    return (
+      <span className="text-xs text-muted-foreground">{t("common.dashboard.customers.noRatings")}</span>
+    );
 
   const rounded = Math.round(value * 2) / 2; // round to nearest 0.5
   return (
@@ -102,33 +107,36 @@ function StarDisplay({ value }: { value: number | null }) {
 
 /** Reputation badge for strong signals */
 function ReputationBadge({ avg }: { avg: number | null }) {
+  const { t } = useTranslation("common");
   if (avg === null) return null;
   if (avg >= 4.5)
     return (
       <Badge className="bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border-0 text-[10px] px-1.5 py-0">
-        Excellent
+        {t("common.dashboard.customers.reputationExcellent")}
       </Badge>
     );
   if (avg >= 3.5)
     return (
       <Badge className="bg-sky-500/15 text-sky-800 dark:text-sky-200 border-0 text-[10px] px-1.5 py-0">
-        Good
+        {t("common.dashboard.customers.reputationGood")}
       </Badge>
     );
   if (avg >= 2.5)
     return (
       <Badge className="bg-amber-500/15 text-amber-800 dark:text-amber-200 border-0 text-[10px] px-1.5 py-0">
-        Average
+        {t("common.dashboard.customers.reputationAverage")}
       </Badge>
     );
   return (
     <Badge className="bg-red-500/15 text-red-800 dark:text-red-200 border-0 text-[10px] px-1.5 py-0">
-      Poor
+      {t("common.dashboard.customers.reputationPoor")}
     </Badge>
   );
 }
 
 function Page() {
+  const { t } = useTranslation("common");
+  const prefix = useLocalePrefix();
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [query, setQuery] = React.useState("");
@@ -138,7 +146,7 @@ function Page() {
       const res = await fetch(
         process.env.NEXT_PUBLIC_API_BASE_URL + "/api/customers",
       );
-      if (!res.ok) throw new Error("Failed to fetch customers");
+      if (!res.ok) throw new Error(t("common.dashboard.customers.failedFetch"));
       const data: Customer[] = await res.json();
       setCustomers(data);
     } catch (error) {
@@ -146,7 +154,7 @@ function Page() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   React.useEffect(() => {
     void fetchCustomers();
@@ -188,9 +196,9 @@ function Page() {
   return (
     <div className="p-4 space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold">Customers</h1>
+        <h1 className="text-2xl font-bold">{t("common.dashboard.customers.pageTitle")}</h1>
         <p className="text-sm text-muted-foreground">
-          Search and review customer profile details and reputation ratings.
+          {t("common.dashboard.customers.pageDescription")}
         </p>
       </div>
 
@@ -198,7 +206,7 @@ function Page() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <p className="text-sm text-muted-foreground">Total customers</p>
+            <p className="text-sm text-muted-foreground">{t("common.dashboard.customers.statTotalCustomers")}</p>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -207,7 +215,7 @@ function Page() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <p className="text-sm text-muted-foreground">Total calls</p>
+            <p className="text-sm text-muted-foreground">{t("common.dashboard.customers.statTotalCalls")}</p>
             <PhoneCall className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -216,7 +224,7 @@ function Page() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <p className="text-sm text-muted-foreground">Resolved calls</p>
+            <p className="text-sm text-muted-foreground">{t("common.dashboard.customers.statResolvedCalls")}</p>
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -235,7 +243,7 @@ function Page() {
           )}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <p className="text-sm text-muted-foreground">Avg. reputation</p>
+            <p className="text-sm text-muted-foreground">{t("common.dashboard.customers.statAvgReputation")}</p>
             <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
           </CardHeader>
           <CardContent className="space-y-1">
@@ -251,7 +259,7 @@ function Page() {
               </>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No rated calls yet
+                {t("common.dashboard.customers.noRatedCalls")}
               </p>
             )}
           </CardContent>
@@ -263,7 +271,7 @@ function Page() {
         <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
           className="pl-9"
-          placeholder="Search by name, code, contact, or phone..."
+          placeholder={t("common.dashboard.customers.searchPlaceholder")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -275,20 +283,20 @@ function Page() {
           {isLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading customers...
+              {t("common.dashboard.customers.loading")}
             </div>
           ) : (
             <div className="overflow-hidden rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Calls</TableHead>
-                    <TableHead>Reputation</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("common.dashboard.customers.tableCode")}</TableHead>
+                    <TableHead>{t("common.dashboard.customers.tableCustomer")}</TableHead>
+                    <TableHead>{t("common.dashboard.customers.tableContact")}</TableHead>
+                    <TableHead>{t("common.dashboard.customers.tablePhone")}</TableHead>
+                    <TableHead>{t("common.dashboard.customers.tableCalls")}</TableHead>
+                    <TableHead>{t("common.dashboard.customers.tableReputation")}</TableHead>
+                    <TableHead className="text-right">{t("common.dashboard.customers.tableActions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -298,7 +306,7 @@ function Page() {
                         colSpan={7}
                         className="h-24 text-center text-muted-foreground"
                       >
-                        No customers found.
+                        {t("common.dashboard.customers.noCustomersFound")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -315,14 +323,16 @@ function Page() {
                           <TableCell className="font-medium">
                             {customer.CLIENT}
                           </TableCell>
-                          <TableCell>{customer.CONTACT || "—"}</TableCell>
-                          <TableCell>{customer.TEL || "—"}</TableCell>
+                          <TableCell>{customer.CONTACT || t("common.dashboard.customers.dash")}</TableCell>
+                          <TableCell>{customer.TEL || t("common.dashboard.customers.dash")}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Badge variant="outline">
-                                {customer._count.callSheets} total
+                                {customer._count.callSheets} {t("common.dashboard.customers.badgeTotal")}
                               </Badge>
-                              <Badge>{resolvedCount} resolved</Badge>
+                              <Badge>
+                                {resolvedCount} {t("common.dashboard.customers.badgeResolved")}
+                              </Badge>
                             </div>
                           </TableCell>
 
@@ -337,9 +347,9 @@ function Page() {
                           <TableCell className="text-right">
                             <Button variant="outline" size="sm">
                               <Link
-                                href={`/dashboard/customers/${customer.id}`}
+                                href={withLocalePath(prefix, `/dashboard/customers/${customer.id}`)}
                               >
-                                View
+                                {t("common.dashboard.customers.view")}
                               </Link>
                             </Button>
                           </TableCell>

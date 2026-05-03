@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import useSWR from "swr";
+import { useTranslation } from "react-i18next";
 import {
   CalendarDays,
   Loader2,
@@ -28,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
 
 type AdminUser = { id: number; username: string; role: string };
 
@@ -46,17 +48,22 @@ type AdminStatsResponse = {
   users: AdminUser[];
 };
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.error || "Failed to load admin stats");
-  }
-  return (await res.json()) as AdminStatsResponse;
-};
-
 export default function AdminPageView() {
+  const { t } = useTranslation("common");
+  const prefix = useLocalePrefix();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+
+  const fetcher = React.useCallback(
+    async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || t("common.dashboard.admin.fetchStatsFailed"));
+      }
+      return (await res.json()) as AdminStatsResponse;
+    },
+    [t],
+  );
 
   const [syncing, setSyncing] = React.useState(false);
   const [syncMessage, setSyncMessage] = React.useState("");
@@ -81,12 +88,12 @@ export default function AdminPageView() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setSyncMessage(body?.error ? String(body.error) : "Sync failed");
+        setSyncMessage(body?.error ? String(body.error) : t("common.dashboard.admin.syncFailed"));
         return;
       }
-      setSyncMessage("Customers synchronized successfully.");
+      setSyncMessage(t("common.dashboard.admin.syncSuccess"));
     } catch (e: unknown) {
-      setSyncMessage(e instanceof Error ? e.message : "Sync failed");
+      setSyncMessage(e instanceof Error ? e.message : t("common.dashboard.admin.syncFailed"));
     } finally {
       setSyncing(false);
     }
@@ -110,7 +117,7 @@ export default function AdminPageView() {
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         setResetMessage(
-          body?.error ? String(body.error) : "Password reset failed",
+          body?.error ? String(body.error) : t("common.dashboard.admin.passwordResetFailed"),
         );
         return;
       }
@@ -122,7 +129,9 @@ export default function AdminPageView() {
       setNewPassword("");
       await mutate();
     } catch (e: unknown) {
-      setResetMessage(e instanceof Error ? e.message : "Password reset failed");
+      setResetMessage(
+        e instanceof Error ? e.message : t("common.dashboard.admin.passwordResetFailed"),
+      );
     } finally {
       setResetLoading(false);
     }
@@ -134,12 +143,11 @@ export default function AdminPageView() {
         <div>
           <div className="mb-1 inline-flex items-center gap-2 text-sm text-muted-foreground">
             <Settings2 className="size-4" aria-hidden />
-            Administration
+            {t("common.dashboard.admin.eyebrow")}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("common.dashboard.admin.title")}</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Simple overview and quick actions. Open a user page for detailed
-            year/day analytics.
+            {t("common.dashboard.admin.description")}
           </p>
           <p className="mt-2 inline-flex items-center gap-2 text-xs text-muted-foreground">
             <CalendarDays className="size-4" aria-hidden />
@@ -156,10 +164,10 @@ export default function AdminPageView() {
             {syncing ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Syncing...
+                {t("common.dashboard.admin.syncing")}
               </>
             ) : (
-              "Sync customers"
+              t("common.dashboard.admin.syncCustomers")
             )}
           </Button>
         </div>
@@ -168,7 +176,7 @@ export default function AdminPageView() {
       {error ? (
         <Card className="border-destructive/30">
           <CardContent className="pt-6 text-sm text-destructive">
-            {(error as Error).message || "Unable to load admin statistics."}
+            {(error as Error).message || t("common.dashboard.admin.loadError")}
           </CardContent>
         </Card>
       ) : null}
@@ -176,7 +184,7 @@ export default function AdminPageView() {
       {isLoading && !data ? (
         <div className="flex min-h-[30vh] items-center justify-center gap-2 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
-          Loading admin data...
+          {t("common.dashboard.admin.loadingData")}
         </div>
       ) : null}
 
@@ -186,7 +194,7 @@ export default function AdminPageView() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">
-                  Total users
+                  {t("common.dashboard.admin.cardTotalUsers")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -194,14 +202,14 @@ export default function AdminPageView() {
                   {data.overview.totalUsers}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {data.overview.totalAdmins} admin(s)
+                  {t("common.dashboard.admin.cardAdmins", { count: data.overview.totalAdmins })}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">
-                  All sheets
+                  {t("common.dashboard.admin.cardAllSheets")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -209,14 +217,14 @@ export default function AdminPageView() {
                   {data.overview.totalSheets}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Across all years
+                  {t("common.dashboard.admin.cardAcrossYears")}
                 </p>
               </CardContent>
             </Card>
             <Card className="border-amber-500/30 bg-amber-500/5">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-amber-900 dark:text-amber-100">
-                  Pending
+                  {t("common.dashboard.admin.cardPending")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -228,7 +236,7 @@ export default function AdminPageView() {
             <Card className="border-emerald-500/30 bg-emerald-500/5">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-emerald-900 dark:text-emerald-100">
-                  Resolved
+                  {t("common.dashboard.admin.cardResolved")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -250,16 +258,16 @@ export default function AdminPageView() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="size-4 text-muted-foreground" aria-hidden />
-                  Users
+                  {t("common.dashboard.admin.usersTitle")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead className="text-right">Analytics</TableHead>
+                      <TableHead>{t("common.dashboard.admin.colUser")}</TableHead>
+                      <TableHead>{t("common.dashboard.admin.colRole")}</TableHead>
+                      <TableHead className="text-right">{t("common.dashboard.admin.colAnalytics")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -273,10 +281,10 @@ export default function AdminPageView() {
                         </TableCell>
                         <TableCell className="text-right">
                           <Link
-                            href={`/dashboard/admin/user/${u.id}`}
+                            href={withLocalePath(prefix, `/dashboard/admin/user/${u.id}`)}
                             className="text-sm font-medium text-primary hover:underline"
                           >
-                            View stats
+                            {t("common.dashboard.admin.viewStats")}
                           </Link>
                         </TableCell>
                       </TableRow>
@@ -288,12 +296,12 @@ export default function AdminPageView() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Quick actions</CardTitle>
+                <CardTitle>{t("common.dashboard.admin.quickActions")}</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
                 <div className="rounded-lg border p-3">
                   <p className="mb-2 text-sm font-medium">
-                    Reset user password
+                    {t("common.dashboard.admin.resetPasswordTitle")}
                   </p>
                   <div className="grid gap-2">
                     <Select
@@ -301,7 +309,7 @@ export default function AdminPageView() {
                       onValueChange={(v) => setSelectedUserId(v ?? "")}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select user" />
+                        <SelectValue placeholder={t("common.dashboard.admin.selectUser")} />
                       </SelectTrigger>
                       <SelectContent>
                         {data.users
@@ -316,7 +324,7 @@ export default function AdminPageView() {
                     <Input
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Temporary password (optional)"
+                      placeholder={t("common.dashboard.admin.tempPasswordPlaceholder")}
                     />
                     <Button
                       type="button"
@@ -326,10 +334,10 @@ export default function AdminPageView() {
                       {resetLoading ? (
                         <>
                           <Loader2 className="size-4 animate-spin" />
-                          Resetting...
+                          {t("common.dashboard.admin.resetting")}
                         </>
                       ) : (
-                        "Reset password"
+                        t("common.dashboard.admin.resetPassword")
                       )}
                     </Button>
                   </div>

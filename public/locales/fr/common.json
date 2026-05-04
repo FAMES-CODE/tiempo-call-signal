@@ -113,7 +113,15 @@
         "browseCustomers": "Parcourir les clients",
         "shortcutHintBefore": "Enregistrez un nouveau dossier depuis le panneau d'activité à gauche avec",
         "shortcutHintHighlight": "Nouvelle fiche d'appel",
-        "shortcutHintAfter": "."
+        "shortcutHintAfter": ".",
+        "miniCards": {
+          "callsReceived": "Appels reçus",
+          "callsReceivedDescription": "Total des fiches d'appel que vous avez créées.",
+          "resolved": "Résolus",
+          "resolvedDescription": "Dossiers que vous avez marqués comme résolus.",
+          "pending": "En attente",
+          "pendingDescription": "Dossiers ouverts issus de vos appels (total − résolus)."
+        }
       },
       "overview": {
         "chart": {

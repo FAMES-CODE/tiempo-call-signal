@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, CircleDashed, PhoneIncoming } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import useSWR from "swr";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ type StatsResponse = {
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 function MiniCards() {
+  const { t } = useTranslation("common");
   const { data, error } = useSWR<StatsResponse>(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/stats`,
     fetcher,
@@ -38,7 +40,7 @@ function MiniCards() {
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-sm font-medium text-primary-foreground/90">
-                Calls received
+                {t("common.dashboard.home.miniCards.callsReceived")}
               </p>
               <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight">
                 {totalCalls}
@@ -49,7 +51,7 @@ function MiniCards() {
             </div>
           </div>
           <p className="text-xs text-primary-foreground/80">
-            Total call sheets you created.
+            {t("common.dashboard.home.miniCards.callsReceivedDescription")}
           </p>
         </CardContent>
       </Card>
@@ -58,7 +60,9 @@ function MiniCards() {
         <CardContent className="flex flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Resolved</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t("common.dashboard.home.miniCards.resolved")}
+              </p>
               <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight">
                 {totalResolved}
               </p>
@@ -68,7 +72,7 @@ function MiniCards() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Cases you marked as resolved.
+            {t("common.dashboard.home.miniCards.resolvedDescription")}
           </p>
         </CardContent>
       </Card>
@@ -77,7 +81,9 @@ function MiniCards() {
         <CardContent className="flex flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Pending</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t("common.dashboard.home.miniCards.pending")}
+              </p>
               <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight">
                 {pending}
               </p>
@@ -87,7 +93,7 @@ function MiniCards() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Open cases from your calls (total − resolved).
+            {t("common.dashboard.home.miniCards.pendingDescription")}
           </p>
         </CardContent>
       </Card>

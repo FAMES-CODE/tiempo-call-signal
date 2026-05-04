@@ -113,7 +113,15 @@
         "browseCustomers": "تصفح العملاء",
         "shortcutHintBefore": "سجّل حالة جديدة من لوحة النشاط على اليسار باستخدام",
         "shortcutHintHighlight": "ورقة مكالمة جديدة",
-        "shortcutHintAfter": "."
+        "shortcutHintAfter": ".",
+        "miniCards": {
+          "callsReceived": "المكالمات المستلمة",
+          "callsReceivedDescription": "إجمالي أوراق المكالمات التي أنشأتها.",
+          "resolved": "محلولة",
+          "resolvedDescription": "الحالات التي وضعت عليها علامة محلول.",
+          "pending": "معلقة",
+          "pendingDescription": "الحالات المفتوحة من مكالماتك (الإجمالي − المحلولة)."
+        }
       },
       "overview": {
         "chart": {

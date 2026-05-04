@@ -113,7 +113,15 @@
         "browseCustomers": "Browse customers",
         "shortcutHintBefore": "Log a new case from the activity panel on the left using",
         "shortcutHintHighlight": "New call sheet",
-        "shortcutHintAfter": "."
+        "shortcutHintAfter": ".",
+        "miniCards": {
+          "callsReceived": "Calls received",
+          "callsReceivedDescription": "Total call sheets you created.",
+          "resolved": "Resolved",
+          "resolvedDescription": "Cases you marked as resolved.",
+          "pending": "Pending",
+          "pendingDescription": "Open cases from your calls (total − resolved)."
+        }
       },
       "overview": {
         "chart": {

@@ -25,7 +25,7 @@ export const FormSheetFormSchema = z.object({
   callSim: z.string().trim().min(1, "Choose a line"),
   callNumber: z.string().trim().min(1, "Enter the caller number"),
   customerId: z
-    .number({ invalid_type_error: "Select a customer" })
+    .number({ error: "Select a customer" })
     .int()
     .positive({ message: "Select a customer" }),
   observation: z.string().optional(),

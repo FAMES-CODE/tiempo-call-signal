@@ -2,16 +2,14 @@
 
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useForm, SubmitHandler, type Path } from "react-hook-form";
 
 import {
   Select,
@@ -41,28 +39,37 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { FormSheetT } from "@/lib/schemas/formsheetSchema";
 
-interface DataTableProps<TData, TValue> {
+function stringAccessorKey<TData>(
+  columnDef: ColumnDef<TData, unknown>,
+): string | undefined {
+  if ("accessorKey" in columnDef) {
+    const k = columnDef.accessorKey;
+    return typeof k === "string" ? k : undefined;
+  }
+  return undefined;
+}
+
+/** Rows that may expose ownership for edit actions */
+type DataTableRow = { id: number; createdById?: number };
+
+interface DataTableProps<TData extends DataTableRow, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends DataTableRow, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm();
+  const { register, handleSubmit } = useForm<FormSheetT>();
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const table = useReactTable({
@@ -170,10 +177,12 @@ export function DataTable<TData, TValue>({
                       parseInt(session.data.user.id) ==
                         row.original.createdById && (
                         <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              Edit
-                            </Button>
+                          <DialogTrigger
+                            className={cn(
+                              buttonVariants({ variant: "outline", size: "sm" }),
+                            )}
+                          >
+                            Edit
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
@@ -185,13 +194,13 @@ export function DataTable<TData, TValue>({
                             <div>
                               <form onSubmit={handleSubmit(onSubmit)}>
                                 {row.getVisibleCells().map((cell) => {
+                                  const accessorKey = stringAccessorKey(
+                                    cell.column.columnDef,
+                                  );
                                   if (
-                                    cell.column.columnDef.accessorKey ===
-                                      "id" ||
-                                    cell.column.columnDef.accessorKey ===
-                                      "customer.CLIENT" ||
-                                    cell.column.columnDef.accessorKey ===
-                                      "user.username"
+                                    accessorKey === "id" ||
+                                    accessorKey === "customer.CLIENT" ||
+                                    accessorKey === "user.username"
                                   )
                                     return null;
                                   return (
@@ -202,11 +211,11 @@ export function DataTable<TData, TValue>({
                                       <label className="block text-sm font-medium mb-1">
                                         {flexRender(
                                           cell.column.columnDef.header,
-                                          cell.getContext(),
+                                          // Header renderer expects header context; label reuses column header from row cell.
+                                          cell.getContext() as never,
                                         )}
                                       </label>
-                                      {cell.column.columnDef.accessorKey ===
-                                      "status" ? (
+                                      {accessorKey === "status" ? (
                                         <Select>
                                           <SelectTrigger className="w-full">
                                             <SelectValue
@@ -232,9 +241,11 @@ export function DataTable<TData, TValue>({
                                             cell.getValue() as string
                                           }
                                           className="w-full"
-                                          {...register(
-                                            cell.column.columnDef.accessorKey,
-                                          )}
+                                          {...(accessorKey
+                                            ? register(
+                                                accessorKey as Path<FormSheetT>,
+                                              )
+                                            : {})}
                                         />
                                       )}
                                     </div>

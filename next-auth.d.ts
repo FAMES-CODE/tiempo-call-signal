@@ -1,9 +1,10 @@
-import { DefaultSession, DefaultUser } from "next-auth";
+import { DefaultSession } from "next-auth";
 import { DefaultJWT } from "next-auth/jwt";
 
 declare module "next-auth" {
   interface User {
     mustChangePassword?: boolean;
+    role?: string;
   }
 
   interface Session {

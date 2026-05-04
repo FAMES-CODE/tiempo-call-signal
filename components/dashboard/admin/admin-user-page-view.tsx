@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/table";
 import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
 
+type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
 type UserStatsResponse = {
   user: { id: number; username: string; role: string };
@@ -89,7 +90,7 @@ function ActivityCalendar({
 }: {
   perDay: Array<{ day: string; count: number }>;
   locale: string;
-  t: (key: string, options?: any) => string;
+  t: TranslateFn;
 }) {
   const today = new Date();
   const latestDayKey = perDay[0]?.day ?? "";
@@ -352,7 +353,7 @@ function MonthlyChart({
 }: {
   perMonth: Array<{ key: string; count: number }>;
   locale: string;
-  t: (key: string, options?: any) => string;
+  t: TranslateFn;
 }) {
   const maxCount = Math.max(1, ...perMonth.map((r) => r.count));
 
@@ -468,7 +469,7 @@ function RecentDaysList({
 }: {
   perDay: Array<{ day: string; count: number }>;
   locale: string;
-  t: (key: string, options?: any) => string;
+  t: TranslateFn;
 }) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [page, setPage] = React.useState(0);

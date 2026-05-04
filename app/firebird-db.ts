@@ -28,9 +28,9 @@ export function withFirebird<T>(
 }
 
 
-export function firebirdQuery<T = Record<string, any>>(
+export function firebirdQuery<T = Record<string, unknown>>(
   query: string,
-  params: any[] = []
+  params: unknown[] = [],
 ): Promise<T[]> {
   return withFirebird((db) => {
     return new Promise((resolve, reject) => {

@@ -95,7 +95,7 @@ export const authOptions = {
     }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = user.role ?? "user";
 
         const dbUser = await prisma.user.findUnique({
           where: { id: Number(user.id) },

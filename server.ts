@@ -7,7 +7,6 @@ async function main() {
   const { createServer } = await import("http");
   const { parse } = await import("url");
   const { default: next } = await import("next");
-  const { default: cron } = await import("node-cron");
   const { checkAdmin } = await import("./app/jobs/system/sys-jobs");
 
   const dev = process.env.NODE_ENV !== "production";

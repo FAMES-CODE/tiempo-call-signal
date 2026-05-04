@@ -2,8 +2,10 @@
 import prisma from "../../../app/db";
 import { Prisma } from "../../../prisma/generated/client";
 
-const toUpperKeys = (obj: any) =>
-  Object.fromEntries(Object.entries(obj).map(([k, v]) => [k.toUpperCase(), v]));
+const toUpperKeys = (obj: Record<string, unknown>) =>
+  Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k.toUpperCase(), v]),
+  );
 
 export async function FirebirdToSQLiteSync() {
   console.log("Syncing customers from Firebird to SQLite...");
@@ -18,10 +20,10 @@ export async function FirebirdToSQLiteSync() {
     if (response.ok) {
       const data = await response.json();
       await prisma.$transaction(
-        data.map((customer: any) => {
+        data.map((customer: Record<string, unknown> & { recordid: number }) => {
           const mapped = toUpperKeys(customer) as Prisma.CustomerCreateInput;
           return prisma.customer.upsert({
-            where: { RECORDID: customer.recordid }, // unique identifier for upsert
+            where: { RECORDID: customer.recordid },
             update: mapped,
             create: mapped,
           });

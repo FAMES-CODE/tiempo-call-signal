@@ -101,12 +101,7 @@ function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
         <Field>
           <div className="flex items-center">
             <FieldLabel htmlFor="password">{t("common.login.passwordLabel")}</FieldLabel>
-            <a
-              href="#"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
-            >
-              {t("common.login.forgotPassword")}
-            </a>
+             
           </div>
           <Input
             id="password"

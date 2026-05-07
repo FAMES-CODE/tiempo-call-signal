@@ -77,12 +77,17 @@ function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
         reset();
       } else {
         notify(
-          typeof body?.message === "string" ? body.message : t("common.register.messages.failed"),
+          typeof body?.message === "string"
+            ? body.message
+            : t("common.register.messages.failed"),
           "error",
         );
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : t("common.register.messages.unexpected");
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("common.register.messages.unexpected");
       notify(message, "error");
     } finally {
       setIsSubmitting(false);
@@ -92,14 +97,18 @@ function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">{t("common.register.title")}</CardTitle>
+          <CardTitle className="text-xl">
+            {t("common.register.title")}
+          </CardTitle>
           <CardDescription>{t("common.register.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="name">{t("common.register.usernameLabel")}</FieldLabel>
+                <FieldLabel htmlFor="name">
+                  {t("common.register.usernameLabel")}
+                </FieldLabel>
                 <Input
                   id="name"
                   type="text"
@@ -111,8 +120,15 @@ function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="password">{t("common.register.passwordLabel")}</FieldLabel>
-                    <Input id="password" type="password" required {...register("password")} />
+                    <FieldLabel htmlFor="password">
+                      {t("common.register.passwordLabel")}
+                    </FieldLabel>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      {...register("password")}
+                    />
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="confirm-password">
@@ -129,18 +145,16 @@ function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
                     />
                   </Field>
                 </Field>
-                <FieldDescription>{t("common.register.passwordHint")}</FieldDescription>
+                <FieldDescription>
+                  {t("common.register.passwordHint")}
+                </FieldDescription>
               </Field>
               <Field>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? t("common.register.submitting") : t("common.register.submit")}
+                  {isSubmitting
+                    ? t("common.register.submitting")
+                    : t("common.register.submit")}
                 </Button>
-                <FieldDescription className="text-center">
-                  {t("common.register.signInPrompt")}{" "}
-                  <Link href={withLocalePath(prefix, "/")} className="underline underline-offset-4">
-                    {t("common.register.signInLink")}
-                  </Link>
-                </FieldDescription>
               </Field>
             </FieldGroup>
           </form>

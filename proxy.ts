@@ -71,7 +71,7 @@ export const proxy = withAuth(
       return NextResponse.redirect(new URL(withLocale(dest, locale), req.url));
     }
 
-    if (path === "/register" && token) {
+    if (path === "/register" && token && role !== "admin") {
       const dest = mustChangePassword ? "/change-password" : "/dashboard";
       return NextResponse.redirect(new URL(withLocale(dest, locale), req.url));
     }
@@ -88,7 +88,7 @@ export const proxy = withAuth(
     callbacks: {
       authorized: ({ token, req }) => {
         const path = stripLocaleFromPath(req.nextUrl.pathname);
-        if (path === "/" || path === "/register") return true;
+        if (path === "/") return true;
         return !!token;
       },
     },

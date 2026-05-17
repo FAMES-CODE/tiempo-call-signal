@@ -16,9 +16,12 @@ export function useLocalePrefix(): string {
   return getLocalePrefixFromPathname(pathname);
 }
 
+const NON_LOCALIZED_PREFIXES = ["/uploads/", "/_next/", "/api/"] as const;
+
 /** Prefix a path with the active locale segment when applicable (e.g. `/dashboard` → `/fr/dashboard`). */
 export function withLocalePath(prefix: string, path: string): string {
   if (!path.startsWith("/")) return path;
+  if (NON_LOCALIZED_PREFIXES.some((p) => path.startsWith(p))) return path;
   if (!prefix) return path;
   if (path === "/") return prefix;
   return `${prefix}${path}`;

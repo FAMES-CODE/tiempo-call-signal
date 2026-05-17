@@ -54,6 +54,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
+import { apiUrl, callSheetPictureFileUrl } from "@/lib/api-url";
 import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
 import { useTranslation } from "react-i18next";
 
@@ -210,14 +211,12 @@ function CallDetailsDialog({
     setRating(newRating);
     setSavingRating(true);
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets/${row.id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rate: newRating }),
-        },
-      );
+      await fetch(apiUrl(`/api/sheets/${row.id}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rate: newRating }),
+        credentials: "include",
+      });
       onResolved(); // refresh list
     } finally {
       setSavingRating(false);
@@ -237,9 +236,9 @@ function CallDetailsDialog({
   const fetchPictures = React.useCallback(async () => {
     setLoadingPictures(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets/${row.id}/pictures`,
-      );
+      const res = await fetch(apiUrl(`/api/sheets/${row.id}/pictures`), {
+        credentials: "include",
+      });
       if (res.ok) setPictures(await res.json());
     } finally {
       setLoadingPictures(false);
@@ -258,10 +257,11 @@ function CallDetailsDialog({
     try {
       const formData = new FormData();
       Array.from(files).forEach((f) => formData.append("files", f));
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets/${row.id}/pictures`,
-        { method: "POST", body: formData },
-      );
+      const res = await fetch(apiUrl(`/api/sheets/${row.id}/pictures`), {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setUploadError((data?.error as string) ?? t("common.dashboard.calls.dialog.uploadFailed"));
@@ -279,14 +279,12 @@ function CallDetailsDialog({
   const handleDeletePicture = async (pictureId: number) => {
     setDeletingId(pictureId);
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets/${row.id}/pictures`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pictureId }),
-        },
-      );
+      await fetch(apiUrl(`/api/sheets/${row.id}/pictures`), {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pictureId }),
+        credentials: "include",
+      });
       setPictures((prev) => prev.filter((p) => p.id !== pictureId));
     } finally {
       setDeletingId(null);
@@ -297,18 +295,16 @@ function CallDetailsDialog({
     if (!currentUserId) return;
     setResolving(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets/${row.id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            status: "resolved",
-            resolvedAt: new Date().toISOString(),
-            resolvedById: currentUserId,
-          }),
-        },
-      );
+      const res = await fetch(apiUrl(`/api/sheets/${row.id}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "resolved",
+          resolvedAt: new Date().toISOString(),
+          resolvedById: currentUserId,
+        }),
+        credentials: "include",
+      });
       if (res.ok) {
         setOpen(false);
         onResolved();
@@ -322,26 +318,24 @@ function CallDetailsDialog({
     setCreatingBon(true);
     setBonResult("");
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/firebird/bon1/from-call-sheet`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            callSheetId: row.id,
-            observation: row.observation ?? undefined,
-            lines: article.trim()
-              ? [
-                  {
-                    produit: article.trim(),
-                    qte: Number.isFinite(qte) ? qte : 1,
-                    PV_HT_AR: Number.isFinite(pvHtAr) ? pvHtAr : 0,
-                  },
-                ]
-              : [],
-          }),
-        },
-      );
+      const res = await fetch(apiUrl("/api/firebird/bon1/from-call-sheet"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          callSheetId: row.id,
+          observation: row.observation ?? undefined,
+          lines: article.trim()
+            ? [
+                {
+                  produit: article.trim(),
+                  qte: Number.isFinite(qte) ? qte : 1,
+                  PV_HT_AR: Number.isFinite(pvHtAr) ? pvHtAr : 0,
+                },
+              ]
+            : [],
+        }),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setBonResult(
@@ -513,10 +507,14 @@ function CallDetailsDialog({
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={pic.url}
+                      src={callSheetPictureFileUrl(row.id, pic.id)}
                       alt=""
                       className="size-full object-cover cursor-pointer transition-opacity group-hover:opacity-80"
-                      onClick={() => setLightboxUrl(pic.url)}
+                      onClick={() =>
+                        setLightboxUrl(
+                          callSheetPictureFileUrl(row.id, pic.id),
+                        )
+                      }
                     />
                     <button
                       type="button"
@@ -671,7 +669,7 @@ export default function CallsPageView() {
     : null;
 
   const { data, error, isLoading, mutate } = useSWR<CallSheetRow[]>(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/sheets`,
+    apiUrl("/api/sheets"),
     fetcher,
     { refreshInterval: 30000 },
   );

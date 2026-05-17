@@ -1,6 +1,14 @@
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import prisma from "@/app/db";
+import { normalizePublicAssetPath } from "@/lib/api-url";
+
+function withFileUrl<T extends { id: number; callSheetId: number }>(picture: T) {
+  return {
+    ...picture,
+    fileUrl: `/api/sheets/${picture.callSheetId}/pictures/${picture.id}/file`,
+  };
+}
 
 export async function GET(
   _request: Request,
@@ -17,7 +25,7 @@ export async function GET(
     const pictures = await prisma.callSheetPicture.findMany({
       where: { callSheetId: parsedId },
     });
-    return new Response(JSON.stringify(pictures));
+    return new Response(JSON.stringify(pictures.map(withFileUrl)));
   } catch (error) {
     console.error(error);
     return new Response(JSON.stringify({ error: "Failed to fetch pictures" }), {
@@ -39,8 +47,32 @@ export async function POST(
       });
     }
 
-    const formData = await request.formData();
-    const files = formData.getAll("files") as File[];
+    const sheet = await prisma.callSheet.findUnique({
+      where: { id: parsedId },
+      select: { id: true },
+    });
+    if (!sheet) {
+      return new Response(JSON.stringify({ error: "Call sheet not found" }), {
+        status: 404,
+      });
+    }
+
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Invalid upload payload (file too large or corrupted). Try a smaller image.",
+        }),
+        { status: 413 },
+      );
+    }
+
+    const files = formData
+      .getAll("files")
+      .filter((entry): entry is File => entry instanceof File && entry.size > 0);
 
     if (!files || files.length === 0) {
       return new Response(JSON.stringify({ error: "No files provided" }), {
@@ -71,11 +103,14 @@ export async function POST(
         await writeFile(filePath, buffer);
 
         // Store the public URL path
-        const url = `/uploads/call-sheets/${parsedId}/${safeName}`;
+        const url = normalizePublicAssetPath(
+          `/uploads/call-sheets/${parsedId}/${safeName}`,
+        );
 
-        return prisma.callSheetPicture.create({
+        const created = await prisma.callSheetPicture.create({
           data: { callSheetId: parsedId, url },
         });
+        return withFileUrl(created);
       }),
     );
 

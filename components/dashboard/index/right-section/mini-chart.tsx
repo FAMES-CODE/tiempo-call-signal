@@ -57,7 +57,7 @@ export function MiniChart() {
         key: "resolved",
         name: "resolved",
         value: totalResolved,
-        fill: "var(--color-chart-2)",
+        fill: "var(--color-chart-1)",
       },
       {
         key: "pending",

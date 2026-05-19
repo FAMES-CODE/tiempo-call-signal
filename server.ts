@@ -8,6 +8,7 @@ async function main() {
   const { parse } = await import("url");
   const { default: next } = await import("next");
   const { checkAdmin } = await import("./app/jobs/system/sys-jobs");
+  const { startCronScheduler } = await import("./lib/cron/scheduler");
 
   const dev = process.env.NODE_ENV !== "production";
   const app = next({ dev });
@@ -15,6 +16,7 @@ async function main() {
 
   app.prepare().then(async () => {
     await checkAdmin();
+    startCronScheduler();
 
     createServer((req, res) => {
       const parsedUrl = parse(req.url!, true);

@@ -81,7 +81,7 @@ function mapCustomerToPayload(customer: CustomerT) {
   } as const;
 }
 
-export async function syncCustomers(): Promise<void> {
+export async function syncCustomers(): Promise<number> {
   const customers = await getCustomersFromFirebird();
 
   for (const customer of customers) {
@@ -92,8 +92,7 @@ export async function syncCustomers(): Promise<void> {
       update: payload,
       create: payload,
     });
-
   }
 
-  console.log(`synced ${customers.length} customers`);
+  return customers.length;
 }

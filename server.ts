@@ -18,12 +18,17 @@ async function main() {
     await checkAdmin();
     startCronScheduler();
 
-    createServer((req, res) => {
+    const server = createServer((req, res) => {
       const parsedUrl = parse(req.url!, true);
       handle(req, res, parsedUrl);
-    }).listen(3000, () => {
+    });
+
+    const port = Number(process.env.PORT) || 3000;
+    const hostname = process.env.HOSTNAME || "0.0.0.0";
+
+    server.listen(port, hostname, () => {
       console.log(
-        `> Ready on http://localhost:3000 (${dev ? "dev" : "production"})`,
+        `> Ready on http://${hostname === "0.0.0.0" ? "localhost" : hostname}:${port} (${dev ? "dev" : "production"})`,
       );
     });
   });

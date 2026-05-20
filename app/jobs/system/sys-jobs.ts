@@ -7,11 +7,18 @@ export async function checkAdmin() {
     where: { role: "admin" },
   });
   if (!admin) {
+    const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD?.trim();
+    if (!defaultPassword) {
+      console.error(
+        "[startup] Aucun admin en base : définissez DEFAULT_ADMIN_PASSWORD pour en créer un.",
+      );
+      return;
+    }
     console.log("No admin user found. Creating default admin user...");
     await prisma.user.create({
       data: {
         username: "admin",
-        password: await bcrypt.hash(process.env.DEFAULT_ADMIN_PASSWORD!, 10),
+        password: await bcrypt.hash(defaultPassword, 10),
         role: "admin",
       },
     });

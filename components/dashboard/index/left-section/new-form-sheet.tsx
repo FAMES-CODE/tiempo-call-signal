@@ -44,7 +44,8 @@ import {
   ChevronsUpDown,
   UserRound,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { apiUrl } from "@/lib/api-url";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -63,6 +64,7 @@ function NewformSheet() {
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
 
   const {
     register,
@@ -82,22 +84,42 @@ function NewformSheet() {
     },
   });
 
-  const loadCustomers = async () => {
-    setLoadingCustomers(true);
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/customers`,
-      );
-      if (!res.ok) throw new Error(t("common.dashboard.overview.newCallSheet.errors.loadCustomersFailed"));
-      const data: CustomerOption[] = await res.json();
-      setCustomers(data);
-    } catch (e) {
-      console.error(e);
-      toast.error(t("common.dashboard.overview.newCallSheet.errors.loadCustomersToast"));
-    } finally {
-      setLoadingCustomers(false);
-    }
-  };
+  const loadCustomers = useCallback(
+    async (search = "") => {
+      setLoadingCustomers(true);
+      try {
+        const params = new URLSearchParams({ limit: "100", page: "1" });
+        if (search.trim()) params.set("search", search.trim());
+        const res = await fetch(apiUrl(`/api/customers?${params}`));
+        if (!res.ok)
+          throw new Error(
+            t("common.dashboard.overview.newCallSheet.errors.loadCustomersFailed"),
+          );
+        const data = (await res.json()) as {
+          items: { id: number; CLIENT: string }[];
+        };
+        setCustomers(
+          data.items.map((c) => ({ id: c.id, CLIENT: c.CLIENT })),
+        );
+      } catch (e) {
+        console.error(e);
+        toast.error(
+          t("common.dashboard.overview.newCallSheet.errors.loadCustomersToast"),
+        );
+      } finally {
+        setLoadingCustomers(false);
+      }
+    },
+    [t],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = setTimeout(() => {
+      void loadCustomers(customerSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [open, customerSearch, loadCustomers]);
 
   const onSubmit: SubmitHandler<FormSheetFormValues> = async (data) => {
     const result = await createFormSheet({
@@ -124,10 +146,9 @@ function NewformSheet() {
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next) {
-          void loadCustomers();
-        } else {
+        if (!next) {
           setCustomerPickerOpen(false);
+          setCustomerSearch("");
         }
       }}
     >
@@ -331,8 +352,12 @@ function NewformSheet() {
                       </Button>
                       {customerPickerOpen && (
                         <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-xl border bg-popover shadow-lg">
-                          <Command>
-                            <CommandInput placeholder={t("common.dashboard.overview.newCallSheet.searchCustomerPlaceholder")} />
+                          <Command shouldFilter={false}>
+                            <CommandInput
+                              placeholder={t("common.dashboard.overview.newCallSheet.searchCustomerPlaceholder")}
+                              value={customerSearch}
+                              onValueChange={setCustomerSearch}
+                            />
                             <CommandList>
                               <CommandEmpty>{t("common.dashboard.overview.newCallSheet.noCustomersFound")}</CommandEmpty>
                               <CommandGroup heading={t("common.dashboard.overview.newCallSheet.customersHeading")}>

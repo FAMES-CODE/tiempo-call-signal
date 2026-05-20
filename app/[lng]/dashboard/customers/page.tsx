@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   Loader2,
   Star,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,16 +26,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { apiUrl } from "@/lib/api-url";
 import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
 import { useTranslation } from "react-i18next";
-
-type CustomerCall = {
-  id: number;
-  status: string;
-  problemType: string | null;
-  createdAt: string;
-  rate: number | null;
-};
 
 type Customer = {
   id: number;
@@ -42,33 +37,40 @@ type Customer = {
   CONTACT: string | null;
   SOLDE: string | number;
   TEL: string | null;
-  EMAIL: string | null;
-  ADRESSE: string | null;
-  COMMUNE: string | null;
-  WILAYA: string | null;
-  NOTES: string | null;
-  _count: {
-    callSheets: number;
-  };
-  callSheets: CustomerCall[];
+  _count: { callSheets: number };
+  resolvedCount: number;
+  avgRating: number | null;
 };
 
-/** Compute the average rating from rated calls (rate > 0) */
-function avgRating(calls: CustomerCall[]): number | null {
-  const rated = calls.filter((c) => c.rate && c.rate > 0);
-  if (rated.length === 0) return null;
-  return rated.reduce((sum, c) => sum + (c.rate ?? 0), 0) / rated.length;
-}
+type CustomersResponse = {
+  items: Customer[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  summary: {
+    totalCustomers: number;
+    totalCalls: number;
+    totalResolved: number;
+    globalAvgRating: number | null;
+  };
+};
 
-/** Read-only mini star display */
+const PAGE_SIZE = 50;
+const SEARCH_DEBOUNCE_MS = 350;
+
 function StarDisplay({ value }: { value: number | null }) {
   const { t } = useTranslation("common");
   if (value === null)
     return (
-      <span className="text-xs text-muted-foreground">{t("common.dashboard.customers.noRatings")}</span>
+      <span className="text-xs text-muted-foreground">
+        {t("common.dashboard.customers.noRatings")}
+      </span>
     );
 
-  const rounded = Math.round(value * 2) / 2; // round to nearest 0.5
+  const rounded = Math.round(value * 2) / 2;
   return (
     <div className="flex items-center gap-1">
       <div className="flex items-center gap-0.5">
@@ -77,12 +79,10 @@ function StarDisplay({ value }: { value: number | null }) {
           const half = !filled && rounded >= star - 0.5;
           return (
             <span key={star} className="relative inline-block size-3.5">
-              {/* Empty star base */}
               <Star
                 className="size-3.5 text-muted-foreground/30"
                 strokeWidth={1.5}
               />
-              {/* Filled overlay */}
               {(filled || half) && (
                 <span
                   className="absolute inset-0 overflow-hidden"
@@ -105,7 +105,6 @@ function StarDisplay({ value }: { value: number | null }) {
   );
 }
 
-/** Reputation badge for strong signals */
 function ReputationBadge({ avg }: { avg: number | null }) {
   const { t } = useTranslation("common");
   if (avg === null) return null;
@@ -138,100 +137,108 @@ function Page() {
   const { t } = useTranslation("common");
   const prefix = useLocalePrefix();
   const [customers, setCustomers] = React.useState<Customer[]>([]);
+  const [summary, setSummary] = React.useState<CustomersResponse["summary"] | null>(
+    null,
+  );
+  const [pagination, setPagination] = React.useState({
+    page: 1,
+    totalPages: 1,
+    total: 0,
+  });
   const [isLoading, setIsLoading] = React.useState(true);
   const [query, setQuery] = React.useState("");
+  const [debouncedQuery, setDebouncedQuery] = React.useState("");
+  const [page, setPage] = React.useState(1);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [query]);
+
   const fetchCustomers = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + "/api/customers",
-      );
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(PAGE_SIZE),
+      });
+      if (debouncedQuery) params.set("search", debouncedQuery);
+
+      const res = await fetch(apiUrl(`/api/customers?${params}`));
       if (!res.ok) throw new Error(t("common.dashboard.customers.failedFetch"));
-      const data: Customer[] = await res.json();
-      setCustomers(data);
+      const data: CustomersResponse = await res.json();
+      setCustomers(data.items);
+      setSummary(data.summary);
+      setPagination({
+        page: data.pagination.page,
+        totalPages: data.pagination.totalPages,
+        total: data.pagination.total,
+      });
     } catch (error) {
       console.error(error);
     } finally {
       setIsLoading(false);
     }
-  }, [t]);
+  }, [page, debouncedQuery, t]);
 
   React.useEffect(() => {
     void fetchCustomers();
   }, [fetchCustomers]);
 
-  const filteredCustomers = React.useMemo(() => {
-    const normalized = query.toLowerCase().trim();
-    if (!normalized) return customers;
-    return customers.filter((c) =>
-      [c.CLIENT, c.CODE_CLIENT, c.CONTACT ?? "", c.TEL ?? ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalized),
-    );
-  }, [customers, query]);
-
-  const totalCalls = React.useMemo(
-    () => customers.reduce((sum, c) => sum + c._count.callSheets, 0),
-    [customers],
-  );
-
-  const totalResolved = React.useMemo(
-    () =>
-      customers.reduce(
-        (sum, c) =>
-          sum +
-          c.callSheets.filter((call) => call.status === "resolved").length,
-        0,
-      ),
-    [customers],
-  );
-
-  /** Global average across all rated calls */
-  const globalAvg = React.useMemo(() => {
-    const allCalls = customers.flatMap((c) => c.callSheets);
-    return avgRating(allCalls);
-  }, [customers]);
+  const globalAvg = summary?.globalAvgRating ?? null;
 
   return (
     <div className="p-4 space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold">{t("common.dashboard.customers.pageTitle")}</h1>
+        <h1 className="text-2xl font-bold">
+          {t("common.dashboard.customers.pageTitle")}
+        </h1>
         <p className="text-sm text-muted-foreground">
           {t("common.dashboard.customers.pageDescription")}
         </p>
       </div>
 
-      {/* ── Stats ── */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <p className="text-sm text-muted-foreground">{t("common.dashboard.customers.statTotalCustomers")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("common.dashboard.customers.statTotalCustomers")}
+            </p>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{customers.length}</p>
+            <p className="text-3xl font-bold">
+              {summary?.totalCustomers ?? "—"}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <p className="text-sm text-muted-foreground">{t("common.dashboard.customers.statTotalCalls")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("common.dashboard.customers.statTotalCalls")}
+            </p>
             <PhoneCall className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{totalCalls}</p>
+            <p className="text-3xl font-bold">{summary?.totalCalls ?? "—"}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <p className="text-sm text-muted-foreground">{t("common.dashboard.customers.statResolvedCalls")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("common.dashboard.customers.statResolvedCalls")}
+            </p>
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{totalResolved}</p>
+            <p className="text-3xl font-bold">
+              {summary?.totalResolved ?? "—"}
+            </p>
           </CardContent>
         </Card>
-        {/* ── NEW: Global reputation card ── */}
         <Card
           className={cn(
             "border",
@@ -243,7 +250,9 @@ function Page() {
           )}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <p className="text-sm text-muted-foreground">{t("common.dashboard.customers.statAvgReputation")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("common.dashboard.customers.statAvgReputation")}
+            </p>
             <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
           </CardHeader>
           <CardContent className="space-y-1">
@@ -266,7 +275,6 @@ function Page() {
         </Card>
       </div>
 
-      {/* ── Search ── */}
       <div className="relative max-w-md">
         <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -277,45 +285,54 @@ function Page() {
         />
       </div>
 
-      {/* ── Table ── */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-4">
           {isLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               {t("common.dashboard.customers.loading")}
             </div>
           ) : (
-            <div className="overflow-hidden rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("common.dashboard.customers.tableCode")}</TableHead>
-                    <TableHead>{t("common.dashboard.customers.tableCustomer")}</TableHead>
-                    <TableHead>{t("common.dashboard.customers.tableContact")}</TableHead>
-                    <TableHead>{t("common.dashboard.customers.tablePhone")}</TableHead>
-                    <TableHead>{t("common.dashboard.customers.tableCalls")}</TableHead>
-                    <TableHead>{t("common.dashboard.customers.tableReputation")}</TableHead>
-                    <TableHead className="text-right">{t("common.dashboard.customers.tableActions")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCustomers.length === 0 ? (
+            <>
+              <div className="overflow-hidden rounded-md border">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        className="h-24 text-center text-muted-foreground"
-                      >
-                        {t("common.dashboard.customers.noCustomersFound")}
-                      </TableCell>
+                      <TableHead>
+                        {t("common.dashboard.customers.tableCode")}
+                      </TableHead>
+                      <TableHead>
+                        {t("common.dashboard.customers.tableCustomer")}
+                      </TableHead>
+                      <TableHead>
+                        {t("common.dashboard.customers.tableContact")}
+                      </TableHead>
+                      <TableHead>
+                        {t("common.dashboard.customers.tablePhone")}
+                      </TableHead>
+                      <TableHead>
+                        {t("common.dashboard.customers.tableCalls")}
+                      </TableHead>
+                      <TableHead>
+                        {t("common.dashboard.customers.tableReputation")}
+                      </TableHead>
+                      <TableHead className="text-right">
+                        {t("common.dashboard.customers.tableActions")}
+                      </TableHead>
                     </TableRow>
-                  ) : (
-                    filteredCustomers.map((customer) => {
-                      const resolvedCount = customer.callSheets.filter(
-                        (c) => c.status === "resolved",
-                      ).length;
-                      const avg = avgRating(customer.callSheets);
-                      return (
+                  </TableHeader>
+                  <TableBody>
+                    {customers.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={7}
+                          className="h-24 text-center text-muted-foreground"
+                        >
+                          {t("common.dashboard.customers.noCustomersFound")}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      customers.map((customer) => (
                         <TableRow key={customer.id}>
                           <TableCell className="text-xs text-muted-foreground font-mono">
                             {customer.CODE_CLIENT}
@@ -323,43 +340,88 @@ function Page() {
                           <TableCell className="font-medium">
                             {customer.CLIENT}
                           </TableCell>
-                          <TableCell>{customer.CONTACT || t("common.dashboard.customers.dash")}</TableCell>
-                          <TableCell>{customer.TEL || t("common.dashboard.customers.dash")}</TableCell>
+                          <TableCell>
+                            {customer.CONTACT ||
+                              t("common.dashboard.customers.dash")}
+                          </TableCell>
+                          <TableCell>
+                            {customer.TEL ||
+                              t("common.dashboard.customers.dash")}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Badge variant="outline">
-                                {customer._count.callSheets} {t("common.dashboard.customers.badgeTotal")}
+                                {customer._count.callSheets}{" "}
+                                {t("common.dashboard.customers.badgeTotal")}
                               </Badge>
                               <Badge>
-                                {resolvedCount} {t("common.dashboard.customers.badgeResolved")}
+                                {customer.resolvedCount}{" "}
+                                {t("common.dashboard.customers.badgeResolved")}
                               </Badge>
                             </div>
                           </TableCell>
-
-                          {/* ── Reputation column ── */}
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <StarDisplay value={avg} />
-                              <ReputationBadge avg={avg} />
+                              <StarDisplay value={customer.avgRating} />
+                              <ReputationBadge avg={customer.avgRating} />
                             </div>
                           </TableCell>
-
                           <TableCell className="text-right">
                             <Button variant="outline" size="sm">
                               <Link
-                                href={withLocalePath(prefix, `/dashboard/customers/${customer.id}`)}
+                                href={withLocalePath(
+                                  prefix,
+                                  `/dashboard/customers/${customer.id}`,
+                                )}
                               >
                                 {t("common.dashboard.customers.view")}
                               </Link>
                             </Button>
                           </TableCell>
                         </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {pagination.totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                  <p className="text-muted-foreground">
+                    {pagination.total} client(s) — page {pagination.page} /{" "}
+                    {pagination.totalPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1 || isLoading}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <ChevronLeft className="size-4" />
+                      Précédent
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={
+                        page >= pagination.totalPages || isLoading
+                      }
+                      onClick={() =>
+                        setPage((p) =>
+                          Math.min(pagination.totalPages, p + 1),
+                        )
+                      }
+                    >
+                      Suivant
+                      <ChevronRight className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

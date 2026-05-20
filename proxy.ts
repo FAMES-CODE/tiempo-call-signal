@@ -1,6 +1,7 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import i18nConfig from "./i18n.config";
+import { enforceApiRateLimitFromProxy } from "./lib/rate-limit";
 
 function getLocaleFromPath(path: string) {
   const maybeLocale = path.split("/")[1];
@@ -38,6 +39,11 @@ export const proxy = withAuth(
     const mustChangePassword = Boolean(token?.mustChangePassword);
     const isChangePasswordPage = path === "/change-password";
     const isApiRoute = path.startsWith("/api/");
+
+    if (isApiRoute && !path.startsWith("/api/auth/")) {
+      const rateLimited = enforceApiRateLimitFromProxy(req, path, token);
+      if (rateLimited) return rateLimited;
+    }
 
     // Enforce locale-prefixed routes: `/dashboard` -> `/<lng>/dashboard`
     if (!isApiRoute && !hasLocalePrefix(req.nextUrl.pathname)) {

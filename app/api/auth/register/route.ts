@@ -3,8 +3,12 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import bcrypt from "bcrypt";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const rateLimited = enforceRateLimit(request, { tier: "admin" });
+  if (rateLimited) return rateLimited;
+
   const session = await getServerSession(authOptions);
   if (!session?.user || session.user.role !== "admin") {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

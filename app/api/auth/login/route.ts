@@ -1,7 +1,11 @@
 import prisma from "@/app/db";
 import bcrypt from "bcrypt";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const rateLimited = enforceRateLimit(request, { tier: "auth" });
+  if (rateLimited) return rateLimited;
+
   const data = await request.json();
   if (!data.username || !data.password) {
     return new Response(

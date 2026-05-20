@@ -4,8 +4,12 @@ import bcrypt from "bcrypt";
 import prisma from "@/app/db";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { ChangePasswordSchema } from "@/lib/schemas/authSchema";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  const rateLimited = enforceRateLimit(req, { tier: "heavyWrite" });
+  if (rateLimited) return rateLimited;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

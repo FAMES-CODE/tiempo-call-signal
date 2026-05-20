@@ -139,7 +139,7 @@ export async function createBon1ForCallSheet(
   // Keep REF_BON for idempotence, and also put the business observation in AUTRE_INFO.
   const who = input.utilisateur?.trim() ? input.utilisateur.trim() : "unknown";
   const iso = now.toISOString();
-  const baseTrace = `Created by ${who} from the tiempo-call-signal application, on ${iso} ${callSheetMarker(input.callSheetId)}`;
+  const baseTrace = `Created by ${who} from the tiempo-maintenance application, on ${iso} ${callSheetMarker(input.callSheetId)}`;
   const autreInfo = input.observation?.trim()
     ? `${baseTrace} - ${input.observation.trim()}`
     : baseTrace;

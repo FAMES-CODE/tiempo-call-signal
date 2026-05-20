@@ -3,6 +3,7 @@ import prisma from "@/app/db";
 type DashboardStats = {
   totalCalls: number;
   totalResolved: number;
+  totalPending: number;
 };
 
 const cacheByUser = new Map<number, { data: DashboardStats; lastFetch: number }>();
@@ -16,15 +17,19 @@ export async function getDashboardStats(userId: number): Promise<DashboardStats>
     return cached.data;
   }
 
-  const totalCalls = await prisma.callSheet.count({
-    where: { createdById: userId },
-  });
+  const userCasesWhere = { createdById: userId };
 
-  const totalResolved = await prisma.callSheet.count({
-    where: { resolvedById: userId, status: "resolved" },
-  });
+  const [totalCalls, totalResolved, totalPending] = await Promise.all([
+    prisma.callSheet.count({ where: userCasesWhere }),
+    prisma.callSheet.count({
+      where: { ...userCasesWhere, status: "resolved" },
+    }),
+    prisma.callSheet.count({
+      where: { ...userCasesWhere, status: "pending" },
+    }),
+  ]);
 
-  const data = { totalCalls, totalResolved };
+  const data = { totalCalls, totalResolved, totalPending };
 
   cacheByUser.set(userId, { data, lastFetch: now });
 

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 type StatsResponse = {
   totalCalls: number;
   totalResolved: number;
+  totalPending: number;
 };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -27,7 +28,8 @@ function MiniCards() {
 
   const totalCalls = data?.totalCalls ?? 0;
   const totalResolved = data?.totalResolved ?? 0;
-  const pending = Math.max(0, totalCalls - totalResolved);
+  const pending =
+    data?.totalPending ?? Math.max(0, totalCalls - totalResolved);
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

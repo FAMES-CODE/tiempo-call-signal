@@ -15,6 +15,7 @@ import {
 type StatsResponse = {
   totalCalls: number;
   totalResolved: number;
+  totalPending: number;
 };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -49,7 +50,8 @@ export function MiniChart() {
 
   const totalCalls = data?.totalCalls ?? 0;
   const totalResolved = data?.totalResolved ?? 0;
-  const pending = Math.max(0, totalCalls - totalResolved);
+  const pending =
+    data?.totalPending ?? Math.max(0, totalCalls - totalResolved);
 
   const chartData = React.useMemo(
     () => [

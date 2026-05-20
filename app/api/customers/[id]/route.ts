@@ -1,10 +1,14 @@
 import prisma from "@/app/db";
+import { requireSession } from "@/lib/auth/api-auth";
 import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireSession();
+  if (auth.error) return auth.error;
+
   try {
     const { id } = await params;
     const parsedId = Number(id);

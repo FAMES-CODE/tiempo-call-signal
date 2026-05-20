@@ -2,6 +2,7 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import prisma from "@/app/db";
 import { normalizePublicAssetPath } from "@/lib/api-url";
+import { requireSession } from "@/lib/auth/api-auth";
 
 function withFileUrl<T extends { id: number; callSheetId: number }>(picture: T) {
   return {
@@ -14,6 +15,9 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireSession();
+  if (auth.error) return auth.error;
+
   try {
     const { id } = await params;
     const parsedId = parseInt(id);
@@ -38,6 +42,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireSession();
+  if (auth.error) return auth.error;
+
   try {
     const { id } = await params;
     const parsedId = parseInt(id);
@@ -130,6 +137,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireSession();
+  if (auth.error) return auth.error;
+
   try {
     const { id } = await params;
     const parsedId = parseInt(id);

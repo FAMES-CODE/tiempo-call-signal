@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import { join, extname } from "path";
 import prisma from "@/app/db";
+import { requireSession } from "@/lib/auth/api-auth";
 
 const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -14,6 +15,9 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string; pictureId: string }> },
 ) {
+  const auth = await requireSession();
+  if (auth.error) return auth.error;
+
   try {
     const { id, pictureId } = await params;
     const callSheetId = parseInt(id, 10);

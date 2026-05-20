@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createBon1 } from "@/lib/firebird-db/bon-actions";
+import { requireSession } from "@/lib/auth/api-auth";
 
 export async function POST(req: Request) {
+  const auth = await requireSession();
+  if (auth.error) return auth.error;
+
   try {
     const body = (await req.json().catch(() => ({}))) as {
       numBon?: string;

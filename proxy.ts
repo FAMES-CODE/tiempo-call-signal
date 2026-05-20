@@ -77,6 +77,9 @@ export const proxy = withAuth(
     }
 
     if (isAdminRoute && role !== "admin") {
+      if (isApiRoute) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       return NextResponse.redirect(
         new URL(withLocale("/dashboard", locale), req.url),
       );

@@ -35,6 +35,7 @@ export async function POST(request: Request) {
         username: data.username,
         password: hashedPassword,
       },
+      omit: { password: true },
     });
     return NextResponse.json(user);
   } else {

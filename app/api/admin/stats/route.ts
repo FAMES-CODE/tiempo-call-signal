@@ -1,4 +1,5 @@
 import prisma from "@/app/db";
+import { requireAdmin } from "@/lib/auth/api-auth";
 import { NextResponse } from "next/server";
 
 function getYearFromSearchParams(searchParams: URLSearchParams): number {
@@ -11,6 +12,9 @@ function getYearFromSearchParams(searchParams: URLSearchParams): number {
 }
 
 export async function GET(request: Request) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
   try {
     const { searchParams } = new URL(request.url);
     const year = getYearFromSearchParams(searchParams);

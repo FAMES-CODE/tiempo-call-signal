@@ -1,7 +1,11 @@
 import prisma from "@/app/db";
+import { requireSession } from "@/lib/auth/api-auth";
 import { NextResponse } from "next/server";
 
 export async function GET() {
+  const auth = await requireSession();
+  if (auth.error) return auth.error;
+
   try {
     const customers = await prisma.customer.findMany({
       include: {

@@ -1,4 +1,5 @@
 import prisma from "@/app/db";
+import { requireAdmin } from "@/lib/auth/api-auth";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 type Params = {
@@ -8,6 +9,9 @@ type Params = {
 
 
 export async function POST(request: Request, { params }: Params) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
   try {
     const { id } = await params;
     const userId = Number(id);

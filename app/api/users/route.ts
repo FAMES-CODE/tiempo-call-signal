@@ -1,12 +1,15 @@
 import prisma from "@/app/db";
+import { requireAdmin } from "@/lib/auth/api-auth";
+import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
-  const users = await prisma.user.findMany();
-  return new Response(JSON.stringify(users));
-}
+export async function GET() {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
 
-export async function POST(request: Request) {
-    const data = await request.json();
-    const user = await prisma.user.create({ data });
-    return new Response(JSON.stringify(user));
+  const users = await prisma.user.findMany({
+    omit: { password: true },
+    orderBy: { username: "asc" },
+  });
+
+  return NextResponse.json(users);
 }

@@ -30,6 +30,8 @@ async function authenticateUser({
       user: {
         id: user.id,
         username: user.username,
+        role: user.role,
+        mustChangePassword: user.mustChangePassword,
       },
     };
   } catch (error) {
@@ -63,7 +65,8 @@ export const authOptions = {
         return {
           id: String(authResult.user.id),
           username: authResult.user.username,
-          role: "user",
+          role: authResult.user.role,
+          mustChangePassword: authResult.user.mustChangePassword,
         };
       },
     }),

@@ -1,51 +1,133 @@
 import * as zod from "zod";
 
+/** Chaîne Firebird : null/vide autorisés, tronquée si besoin. */
+function fbString(maxLen?: number) {
+  return zod.preprocess((val) => {
+    if (val === null || val === undefined) return undefined;
+    const s = String(val).trim();
+    if (!s) return undefined;
+    return maxLen ? s.slice(0, maxLen) : s;
+  }, zod.string().optional());
+}
+
+/** Nombre Firebird (montants, soldes) : accepte décimaux et valeurs négatives. */
+function fbFloat(defaultValue = 0) {
+  return zod.preprocess((val) => {
+    if (val === null || val === undefined || val === "") return defaultValue;
+    const n = Number(val);
+    return Number.isFinite(n) ? n : defaultValue;
+  }, zod.number());
+}
+
+function fbOptionalFloat() {
+  return zod.preprocess((val) => {
+    if (val === null || val === undefined || val === "") return undefined;
+    const n = Number(val);
+    return Number.isFinite(n) ? n : undefined;
+  }, zod.number().optional());
+}
+
+function fbOptionalInt() {
+  return zod.preprocess((val) => {
+    if (val === null || val === undefined || val === "") return undefined;
+    const n = Number(val);
+    return Number.isFinite(n) ? Math.trunc(n) : undefined;
+  }, zod.number().int().optional());
+}
+
+function fbOptionalDate() {
+  return zod.preprocess((val) => {
+    if (val === null || val === undefined || val === "") return undefined;
+    const d = val instanceof Date ? val : new Date(val as string | number);
+    return Number.isNaN(d.getTime()) ? undefined : d;
+  }, zod.date().optional());
+}
+
 export const customersSchema = zod.object({
-  recordid: zod.coerce.number().int().nonnegative(),
-  code_client: zod.string().max(20, "CODE_CLIENT must be at most 20 characters long"),
-  client: zod.string().max(100, "CLIENT must be at most 100 characters long"),
-  activite: zod.string().optional(),
-  code_postal: zod.string().max(10, "CODE_POSTAL must be at most 10 characters long"),
-  adresse: zod.string().max(100, "ADRESSE must be at most 100 characters long"),
-  commune: zod.string().max(50, "COMMUNE must be at most 50 characters long"),
-  wilaya: zod.string().max(25, "WILAYA must be at most 25 characters long"),
-  contact: zod.string().max(40, "CONTACT must be at most 40 characters long"),
-  tel: zod.string().max(50, "TEL must be at most 50 characters long"),
-  fax: zod.string().max(40, "FAX must be at most 40 characters long"),
-  num_rc: zod.string().max(20, "NUM_RC must be at most 20 characters long"),
-  num_if: zod.string().max(20, "NUM_IF must be at most 20 characters long"),
-  num_is: zod.string().max(20, "NUM_IS must be at most 20 characters long"),
-  num_art: zod.string().max(20, "NUM_ART must be at most 20 characters long"),
-  nin: zod.string().max(50, "NIN must be at most 50 characters long"),
-  compte: zod.string().max(40, "COMPTE must be at most 40 characters long"),
-  rib: zod.string().max(40, "RIB must be at most 40 characters long"),
-  email: zod.string().max(50, "EMAIL must be at most 50 characters long"),
-  site_web: zod.string().max(50, "SITE_WEB must be at most 50 characters long"),
-  solde_ini: zod.coerce.number().int().nonnegative(),
-  achats: zod.coerce.number().int().nonnegative().default(0),
-  verser: zod.coerce.number().int().nonnegative().default(0),
-  credit_limit: zod.coerce.number().int().nonnegative(),
-  notes: zod.string().max(255, "NOTES must be at most 255 characters long"),
-  famille: zod.string().max(50, "FAMILLE must be at most 50 characters long").nullable().optional(),
-  sous_famille: zod.string().max(50, "SOUS_FAMILLE must be at most 50 characters long").nullable().optional(),
-  nbr_bon: zod.coerce.number().int().nonnegative(),
-  solde: zod.coerce.number().int(),
-  mode_tarif: zod.string().max(1, "MODE_TARIF must be at most 1 characters long"),
-  type_fid: zod.string().max(10, "TYPE_FID must be at most 10 characters long").nullable().optional(),
-  num_cf: zod.string().max(20, "NUM_CF must be at most 20 characters long"),
-  allow_credit: zod.coerce.number().int().nonnegative(),
-  date_passage: zod.coerce.date().optional(),
-  vis_admin: zod.coerce.number().int().nonnegative(),
-  code_frs: zod.string().max(20, "CODE_FRS must be at most 20 characters long").nullable().optional(),
-  code_depot: zod.string().max(6, "CODE_DEPOT must be at most 6 characters long").nullable().optional(),
-  latitude: zod.coerce.number().nonnegative(),
-  longitude: zod.coerce.number().nonnegative(),
-  code_vendeur: zod.string().max(20, "CODE_VENDEUR must be at most 20 characters long").nullable().optional(),
-  sup: zod.coerce.number().int().nonnegative(),
-  date_der_modification: zod.coerce.date().optional(),
-  utilisateur: zod.string().max(25, "UTILISATEUR must be at most 25 characters long"),
-  nom_ord: zod.string().max(25, "NOM_ORD must be at most 25 characters long"),
-  jrnl: zod.coerce.number().int().nonnegative(),
+  recordid: zod.coerce.number().int(),
+  code_client: zod.preprocess((val) => {
+    if (val === null || val === undefined) return "";
+    return String(val).trim().slice(0, 50);
+  }, zod.string()),
+  client: zod.preprocess((val) => {
+    if (val === null || val === undefined) return "";
+    return String(val).trim().slice(0, 100);
+  }, zod.string()),
+  activite: fbString(100),
+  code_postal: fbString(20),
+  adresse: fbString(100),
+  commune: fbString(50),
+  wilaya: fbString(25),
+  contact: fbString(40),
+  tel: fbString(50),
+  fax: fbString(40),
+  num_rc: fbString(20),
+  num_if: fbString(20),
+  num_is: fbString(20),
+  num_art: fbString(20),
+  nin: fbString(100),
+  compte: fbString(40),
+  rib: fbString(40),
+  email: fbString(50),
+  site_web: fbString(50),
+  solde_ini: fbFloat(0),
+  achats: fbFloat(0),
+  verser: fbFloat(0),
+  credit_limit: fbOptionalFloat(),
+  notes: fbString(255),
+  famille: fbString(50),
+  sous_famille: fbString(50),
+  nbr_bon: fbOptionalInt(),
+  solde: fbFloat(0),
+  mode_tarif: fbString(10),
+  type_fid: fbString(10),
+  num_cf: fbString(20),
+  allow_credit: fbOptionalInt(),
+  date_passage: fbOptionalDate(),
+  vis_admin: fbOptionalInt(),
+  code_frs: fbString(20),
+  code_depot: fbString(10),
+  latitude: fbOptionalFloat(),
+  longitude: fbOptionalFloat(),
+  code_vendeur: fbString(20),
+  sup: fbOptionalInt(),
+  date_der_modification: fbOptionalDate(),
+  utilisateur: fbString(50),
+  nom_ord: fbString(50),
+  jrnl: fbOptionalInt(),
 });
 
 export type CustomerT = zod.infer<typeof customersSchema>;
+
+export function parseCustomerRow(
+  raw: Record<string, unknown>,
+  index: number,
+): { ok: true; data: CustomerT } | { ok: false; index: number; recordid: unknown; error: string } {
+  const withDefaults = {
+    ...raw,
+    code_client:
+      raw.code_client != null && String(raw.code_client).trim()
+        ? raw.code_client
+        : raw.recordid != null
+          ? `C${raw.recordid}`
+          : `ROW${index}`,
+    client:
+      raw.client != null && String(raw.client).trim()
+        ? raw.client
+        : raw.recordid != null
+          ? `Client ${raw.recordid}`
+          : `Client ${index}`,
+  };
+
+  const parsed = customersSchema.safeParse(withDefaults);
+  if (parsed.success) {
+    return { ok: true, data: parsed.data };
+  }
+
+  return {
+    ok: false,
+    index,
+    recordid: raw.recordid,
+    error: JSON.stringify(parsed.error.flatten().fieldErrors),
+  };
+}

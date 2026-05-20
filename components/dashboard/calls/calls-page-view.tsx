@@ -873,7 +873,7 @@ export default function CallsPageView() {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => void mutate()}
+            onClick={() => void window.location.reload()}
             disabled={isLoading}
           >
             <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />

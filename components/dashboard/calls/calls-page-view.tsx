@@ -17,6 +17,7 @@ import {
   ImageIcon,
   Loader2,
   Phone,
+  Pencil,
   RefreshCw,
   Search,
   SlidersHorizontal,
@@ -36,7 +37,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -71,9 +84,17 @@ export type CallSheetRow = {
   createdById: number;
   createdAt: string;
   updatedAt: string;
-  customer: { CLIENT: string };
+  customer: { id: number; CLIENT: string };
   user: { username: string; id: number };
 };
+
+const LINE_OPTIONS = [
+  { value: "905", label: "905" },
+  { value: "503", label: "503" },
+  { value: "903", label: "903" },
+] as const;
+
+type CustomerOption = { id: number; CLIENT: string };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -186,10 +207,12 @@ function StarRating({
 function CallDetailsDialog({
   row,
   currentUserId,
+  canManage,
   onResolved,
 }: {
   row: CallSheetRow;
   currentUserId: number | null;
+  canManage: boolean;
   onResolved: () => void;
 }) {
   const { t, i18n } = useTranslation("common");
@@ -201,13 +224,110 @@ function CallDetailsDialog({
   const [article, setArticle] = React.useState("");
   const [qte, setQte] = React.useState<number>(1);
   const [pvHtAr, setPvHtAr] = React.useState<number>(0);
-  const canResolve = row.status === "pending";
-  const canSyncBon = row.status === "resolved" && !row.isSynced;
+  const canResolve = canManage && row.status === "pending";
+  const canSyncBon = canManage && row.status === "resolved" && !row.isSynced;
+
+  const [editing, setEditing] = React.useState(false);
+  const [savingEdit, setSavingEdit] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const [editError, setEditError] = React.useState("");
+  const [customers, setCustomers] = React.useState<CustomerOption[]>([]);
+  const [loadingCustomers, setLoadingCustomers] = React.useState(false);
+  const [editForm, setEditForm] = React.useState({
+    problemType: row.problemType ?? "",
+    problemDescription: row.problemDescription ?? "",
+    callSim: row.callSim ?? "",
+    callNumber: row.callNumber ?? "",
+    observation: row.observation ?? "",
+    customerId: row.customer.id,
+  });
+
+  React.useEffect(() => {
+    if (!open) {
+      setEditing(false);
+      setEditError("");
+    }
+  }, [open]);
+
+  React.useEffect(() => {
+    setEditForm({
+      problemType: row.problemType ?? "",
+      problemDescription: row.problemDescription ?? "",
+      callSim: row.callSim ?? "",
+      callNumber: row.callNumber ?? "",
+      observation: row.observation ?? "",
+      customerId: row.customer.id,
+    });
+  }, [row]);
+
+  const loadCustomers = React.useCallback(async () => {
+    setLoadingCustomers(true);
+    try {
+      const params = new URLSearchParams({ limit: "100", page: "1" });
+      const res = await fetch(apiUrl(`/api/customers?${params}`), {
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { items: CustomerOption[] };
+        setCustomers(data.items ?? []);
+      }
+    } finally {
+      setLoadingCustomers(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (open && editing) void loadCustomers();
+  }, [open, editing, loadCustomers]);
+
+  const handleSaveEdit = async () => {
+    setSavingEdit(true);
+    setEditError("");
+    try {
+      const res = await fetch(apiUrl(`/api/sheets/${row.id}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setEditError(
+          (data?.error as string) ??
+            t("common.dashboard.calls.dialog.editFailed"),
+        );
+        return;
+      }
+      setEditing(false);
+      onResolved();
+    } catch {
+      setEditError(t("common.dashboard.calls.dialog.editNetwork"));
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch(apiUrl(`/api/sheets/${row.id}`), {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setOpen(false);
+        onResolved();
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // Rating state
   const [rating, setRating] = React.useState<number>(row.rate ?? 0);
   const [savingRating, setSavingRating] = React.useState(false);
   const handleSaveRating = async (newRating: number) => {
+    if (!canManage) return;
     setRating(newRating);
     setSavingRating(true);
     try {
@@ -372,15 +492,203 @@ function CallDetailsDialog({
       </Button>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("common.dashboard.calls.dialog.title", { id: row.id })}</DialogTitle>
-          <DialogDescription>
-            {row.customer.CLIENT} ·{" "}
-            {t("common.dashboard.calls.dialog.loggedAt", {
-              date: formatDate(row.createdAt, i18n.language),
-            })}
-          </DialogDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <DialogTitle>
+                {t("common.dashboard.calls.dialog.title", { id: row.id })}
+              </DialogTitle>
+              <DialogDescription>
+                {row.customer.CLIENT} ·{" "}
+                {t("common.dashboard.calls.dialog.loggedAt", {
+                  date: formatDate(row.createdAt, i18n.language),
+                })}
+              </DialogDescription>
+            </div>
+            {canManage && !editing && (
+              <div className="flex shrink-0 gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t("common.dashboard.calls.dialog.editAria")}
+                  onClick={() => setEditing(true)}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="size-8 text-destructive hover:text-destructive"
+                        aria-label={t("common.dashboard.calls.dialog.deleteAria")}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    }
+                  />
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {t("common.dashboard.calls.dialog.deleteTitle")}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t("common.dashboard.calls.dialog.deleteDescription", {
+                          id: row.id,
+                        })}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>
+                        {t("common.dashboard.calls.dialog.deleteCancel")}
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        variant="destructive"
+                        disabled={deleting}
+                        onClick={() => void handleDelete()}
+                      >
+                        {deleting ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          t("common.dashboard.calls.dialog.deleteConfirm")
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+          </div>
         </DialogHeader>
         <div className="grid gap-4 text-sm">
+          {editing ? (
+            <div className="grid gap-3 rounded-lg border bg-muted/30 p-4">
+              <div className="grid gap-2">
+                <Label>{t("common.dashboard.calls.dialog.problemType")}</Label>
+                <Input
+                  value={editForm.problemType}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, problemType: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>{t("common.dashboard.calls.dialog.description")}</Label>
+                <Textarea
+                  value={editForm.problemDescription}
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      problemDescription: e.target.value,
+                    }))
+                  }
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-2">
+                  <Label>{t("common.dashboard.calls.dialog.simLine")}</Label>
+                  <Select
+                    value={editForm.callSim}
+                    onValueChange={(v) =>
+                      setEditForm((f) => ({ ...f, callSim: v ?? "" }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="SIM" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LINE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>{t("common.dashboard.calls.dialog.number")}</Label>
+                  <Input
+                    value={editForm.callNumber}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, callNumber: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label>{t("common.dashboard.calls.dialog.customer")}</Label>
+                <Select
+                  value={String(editForm.customerId)}
+                  onValueChange={(v) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      customerId: Number(v),
+                    }))
+                  }
+                  disabled={loadingCustomers}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        loadingCustomers
+                          ? t("common.dashboard.overview.newCallSheet.loadingCustomers")
+                          : t("common.dashboard.overview.newCallSheet.selectCustomer")
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.CLIENT}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>{t("common.dashboard.calls.dialog.observation")}</Label>
+                <Textarea
+                  value={editForm.observation}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, observation: e.target.value }))
+                  }
+                  rows={2}
+                />
+              </div>
+              {editError && (
+                <p className="text-xs text-destructive">{editError}</p>
+              )}
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditing(false)}
+                  disabled={savingEdit}
+                >
+                  {t("common.dashboard.calls.dialog.editCancel")}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => void handleSaveEdit()}
+                  disabled={savingEdit}
+                >
+                  {savingEdit ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      {t("common.dashboard.calls.dialog.saving")}
+                    </>
+                  ) : (
+                    t("common.dashboard.calls.dialog.saveChanges")
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+          <>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-muted-foreground">{t("common.dashboard.calls.dialog.status")}</span>
             <StatusBadge status={row.status} />
@@ -441,6 +749,7 @@ function CallDetailsDialog({
               <dd className="mt-1.5 flex items-center gap-2">
                 <StarRating
                   value={rating}
+                  readonly={!canManage}
                   onChange={(v) => void handleSaveRating(v)}
                 />
                 {savingRating && (
@@ -466,7 +775,7 @@ function CallDetailsDialog({
                 variant="outline"
                 size="sm"
                 className="h-7 gap-1.5 text-xs"
-                disabled={uploading}
+                disabled={uploading || !canManage}
                 onClick={() => fileInputRef.current?.click()}
               >
                 {uploading ? (
@@ -516,6 +825,7 @@ function CallDetailsDialog({
                         )
                       }
                     />
+                    {canManage && (
                     <button
                       type="button"
                       aria-label={t("common.dashboard.calls.dialog.deletePictureAria")}
@@ -529,34 +839,12 @@ function CallDetailsDialog({
                         <Trash2 className="size-3" />
                       )}
                     </button>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
-
-          {/* ── Lightbox ─────────────────────────────────────── */}
-          {lightboxUrl && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-              onClick={() => setLightboxUrl(null)}
-            >
-              <button
-                type="button"
-                className="absolute right-4 top-4 rounded-full bg-background/20 p-1.5 text-white"
-                onClick={() => setLightboxUrl(null)}
-              >
-                <X className="size-5" />
-              </button>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={lightboxUrl}
-                alt=""
-                className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          )}
           <div className="grid gap-2">
             <div className="rounded-lg border bg-muted/20 p-3">
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -632,6 +920,31 @@ function CallDetailsDialog({
           >
             {t("common.dashboard.calls.dialog.viewCustomersDirectory")}
           </Link>
+          </>
+          )}
+
+          {/* ── Lightbox ─────────────────────────────────────── */}
+          {lightboxUrl && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+              onClick={() => setLightboxUrl(null)}
+            >
+              <button
+                type="button"
+                className="absolute right-4 top-4 rounded-full bg-background/20 p-1.5 text-white"
+                onClick={() => setLightboxUrl(null)}
+              >
+                <X className="size-5" />
+              </button>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={lightboxUrl}
+                alt=""
+                className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
         </div>
         {canResolve && (
           <DialogFooter className="gap-2 sm:gap-0">
@@ -667,6 +980,7 @@ export default function CallsPageView() {
   const currentUserId = session?.user?.id
     ? parseInt(session.user.id, 10)
     : null;
+  const isAdmin = session?.user?.role === "admin";
 
   const { data, error, isLoading, mutate } = useSWR<CallSheetRow[]>(
     apiUrl("/api/sheets"),
@@ -830,12 +1144,17 @@ export default function CallsPageView() {
           <CallDetailsDialog
             row={row.original}
             currentUserId={currentUserId}
+            canManage={
+              isAdmin ||
+              (currentUserId != null &&
+                row.original.createdById === currentUserId)
+            }
             onResolved={() => void mutate()}
           />
         ),
       },
     ],
-    [currentUserId, mutate, t],
+    [currentUserId, isAdmin, mutate, t],
   );
 
   const table = useReactTable({

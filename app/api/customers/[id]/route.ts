@@ -1,5 +1,6 @@
 import prisma from "@/app/db";
 import { requireSession } from "@/lib/auth/api-auth";
+import { callSheetNotDeleted } from "@/lib/call-sheet/access";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -19,8 +20,13 @@ export async function GET(
     const customer = await prisma.customer.findUnique({
       where: { id: parsedId },
       include: {
-        _count: { select: { callSheets: true } },
+        _count: {
+          select: {
+            callSheets: { where: callSheetNotDeleted },
+          },
+        },
         callSheets: {
+          where: callSheetNotDeleted,
           select: {
             id: true,
             status: true,

@@ -1,5 +1,6 @@
 import prisma from "@/app/db";
 import { requireAdmin } from "@/lib/auth/api-auth";
+import { callSheetNotDeleted } from "@/lib/call-sheet/access";
 import { NextResponse } from "next/server";
 
 function getYearFromSearchParams(searchParams: URLSearchParams): number {
@@ -27,9 +28,13 @@ export async function GET(request: Request) {
 
     // Global sheet stats
     const [totalSheets, pendingSheets, resolvedSheets] = await Promise.all([
-      prisma.callSheet.count(),
-      prisma.callSheet.count({ where: { status: "pending" } }),
-      prisma.callSheet.count({ where: { status: "resolved" } }),
+      prisma.callSheet.count({ where: callSheetNotDeleted }),
+      prisma.callSheet.count({
+        where: { ...callSheetNotDeleted, status: "pending" },
+      }),
+      prisma.callSheet.count({
+        where: { ...callSheetNotDeleted, status: "resolved" },
+      }),
     ]);
 
     // Year-specific stats
@@ -38,10 +43,14 @@ export async function GET(request: Request) {
 
     const [selectedYearSheets, selectedYearResolved] = await Promise.all([
       prisma.callSheet.count({
-        where: { createdAt: { gte: startOfYear, lt: endOfYear } },
+        where: {
+          ...callSheetNotDeleted,
+          createdAt: { gte: startOfYear, lt: endOfYear },
+        },
       }),
       prisma.callSheet.count({
         where: {
+          ...callSheetNotDeleted,
           status: "resolved",
           createdAt: { gte: startOfYear, lt: endOfYear },
         },
@@ -50,6 +59,7 @@ export async function GET(request: Request) {
 
     // Available years from existing data
     const yearsRaw = await prisma.callSheet.findMany({
+      where: callSheetNotDeleted,
       select: { createdAt: true },
       orderBy: { createdAt: "asc" },
     });
@@ -76,7 +86,10 @@ export async function GET(request: Request) {
 
     // Load all sheets for the selected year once and aggregate in memory
     const sheetsForYear = await prisma.callSheet.findMany({
-      where: { createdAt: { gte: startOfYear, lt: endOfYear } },
+      where: {
+        ...callSheetNotDeleted,
+        createdAt: { gte: startOfYear, lt: endOfYear },
+      },
       select: {
         id: true,
         createdAt: true,
@@ -112,6 +125,7 @@ export async function GET(request: Request) {
     // Sheets per user (all time)
     const sheetsPerUserRaw = await prisma.callSheet.groupBy({
       by: ["createdById"],
+      where: callSheetNotDeleted,
       _count: { id: true },
     });
     const sheetsPerUser = sheetsPerUserRaw.map((row) => ({
@@ -141,7 +155,11 @@ export async function GET(request: Request) {
     // Resolved by user (all time)
     const resolvedByUserRaw = await prisma.callSheet.groupBy({
       by: ["resolvedById"],
-      where: { status: "resolved", resolvedById: { not: null } },
+      where: {
+        ...callSheetNotDeleted,
+        status: "resolved",
+        resolvedById: { not: null },
+      },
       _count: { id: true },
     });
     const resolvedByUser = resolvedByUserRaw.map((row) => ({

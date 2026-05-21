@@ -329,7 +329,18 @@
           "createFirebirdNote": "Create a Firebird note",
           "resolving": "Resolving…",
           "markResolved": "Mark as resolved",
-          "viewCustomersDirectory": "View customers directory"
+          "viewCustomersDirectory": "View customers directory",
+          "editAria": "Edit call sheet",
+          "deleteAria": "Delete call sheet",
+          "deleteTitle": "Delete this call sheet?",
+          "deleteDescription": "Call sheet #{{id}} will be hidden (local SQLite only, no Firebird impact).",
+          "deleteCancel": "Cancel",
+          "deleteConfirm": "Delete",
+          "editCancel": "Cancel",
+          "saveChanges": "Save",
+          "saving": "Saving…",
+          "editFailed": "Update failed",
+          "editNetwork": "Update failed — network error"
         }
       },
       "admin": {

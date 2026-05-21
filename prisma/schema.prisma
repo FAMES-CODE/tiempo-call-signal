@@ -89,6 +89,7 @@ model CallSheet {
   resolvedBy         User?              @relation("ResolvedBy", fields: [resolvedById], references: [id])
   resolvedById       Int?
   isSynced           Boolean            @default(false)
+  isDelete           Boolean            @default(false)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   pictures           CallSheetPicture[]

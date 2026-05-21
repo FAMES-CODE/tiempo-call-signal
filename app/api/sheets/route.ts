@@ -1,5 +1,6 @@
 import prisma from "@/app/db";
 import { requireSession } from "@/lib/auth/api-auth";
+import { getCallSheetListWhere } from "@/lib/call-sheet/access";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -7,6 +8,7 @@ export async function GET() {
   if (auth.error) return auth.error;
 
   const sheets = await prisma.callSheet.findMany({
+    where: getCallSheetListWhere(auth.session),
     include: {
       customer: true,
       user: {

@@ -1,4 +1,5 @@
 import prisma from "@/app/db";
+import { callSheetNotDeleted } from "@/lib/call-sheet/access";
 import { requireSession } from "@/lib/auth/api-auth";
 import { NextResponse } from "next/server";
 
@@ -101,10 +102,12 @@ async function getCustomersSummary() {
   const [totalCustomers, totalCalls, totalResolved, ratingAgg] =
     await Promise.all([
       prisma.customer.count(),
-      prisma.callSheet.count(),
-      prisma.callSheet.count({ where: { status: "resolved" } }),
+      prisma.callSheet.count({ where: callSheetNotDeleted }),
+      prisma.callSheet.count({
+        where: { ...callSheetNotDeleted, status: "resolved" },
+      }),
       prisma.callSheet.aggregate({
-        where: { rate: { gt: 0 } },
+        where: { ...callSheetNotDeleted, rate: { gt: 0 } },
         _avg: { rate: true },
         _count: { rate: true },
       }),
@@ -138,17 +141,25 @@ async function getCallStatsForCustomers(
   const [totalCounts, resolvedCounts, ratingGroups] = await Promise.all([
     prisma.callSheet.groupBy({
       by: ["customerId"],
-      where: { customerId: { in: customerIds } },
+      where: { ...callSheetNotDeleted, customerId: { in: customerIds } },
       _count: { _all: true },
     }),
     prisma.callSheet.groupBy({
       by: ["customerId"],
-      where: { customerId: { in: customerIds }, status: "resolved" },
+      where: {
+        ...callSheetNotDeleted,
+        customerId: { in: customerIds },
+        status: "resolved",
+      },
       _count: { _all: true },
     }),
     prisma.callSheet.groupBy({
       by: ["customerId"],
-      where: { customerId: { in: customerIds }, rate: { gt: 0 } },
+      where: {
+        ...callSheetNotDeleted,
+        customerId: { in: customerIds },
+        rate: { gt: 0 },
+      },
       _avg: { rate: true },
       _count: { rate: true },
     }),

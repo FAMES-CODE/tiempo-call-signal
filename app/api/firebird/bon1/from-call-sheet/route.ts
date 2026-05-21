@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/app/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getCallSheetIfAccessible } from "@/lib/call-sheet/access";
 import {
   createBon1ForCallSheet,
   insertBon2Line,
@@ -26,6 +27,14 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Invalid callSheetId" },
         { status: 400 },
+      );
+    }
+
+    const access = await getCallSheetIfAccessible(session, callSheetId);
+    if (!access) {
+      return NextResponse.json(
+        { error: "Call sheet not found" },
+        { status: 404 },
       );
     }
 

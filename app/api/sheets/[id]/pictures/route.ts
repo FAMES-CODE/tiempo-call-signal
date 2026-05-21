@@ -3,6 +3,7 @@ import { join } from "path";
 import prisma from "@/app/db";
 import { normalizePublicAssetPath } from "@/lib/api-url";
 import { requireSession } from "@/lib/auth/api-auth";
+import { getCallSheetIfAccessible } from "@/lib/call-sheet/access";
 
 function withFileUrl<T extends { id: number; callSheetId: number }>(picture: T) {
   return {
@@ -20,12 +21,20 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const parsedId = parseInt(id);
+    const parsedId = parseInt(id, 10);
     if (isNaN(parsedId)) {
       return new Response(JSON.stringify({ error: "Invalid ID" }), {
         status: 400,
       });
     }
+
+    const sheet = await getCallSheetIfAccessible(auth.session, parsedId);
+    if (!sheet) {
+      return new Response(JSON.stringify({ error: "Call sheet not found" }), {
+        status: 404,
+      });
+    }
+
     const pictures = await prisma.callSheetPicture.findMany({
       where: { callSheetId: parsedId },
     });
@@ -47,17 +56,14 @@ export async function POST(
 
   try {
     const { id } = await params;
-    const parsedId = parseInt(id);
+    const parsedId = parseInt(id, 10);
     if (isNaN(parsedId)) {
       return new Response(JSON.stringify({ error: "Invalid ID" }), {
         status: 400,
       });
     }
 
-    const sheet = await prisma.callSheet.findUnique({
-      where: { id: parsedId },
-      select: { id: true },
-    });
+    const sheet = await getCallSheetIfAccessible(auth.session, parsedId);
     if (!sheet) {
       return new Response(JSON.stringify({ error: "Call sheet not found" }), {
         status: 404,
@@ -87,7 +93,6 @@ export async function POST(
       });
     }
 
-    // Save files to public/uploads/call-sheets/<id>/
     const uploadDir = join(
       process.cwd(),
       "public",
@@ -102,14 +107,12 @@ export async function POST(
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // Sanitize filename and make it unique
         const ext = file.name.split(".").pop() ?? "jpg";
         const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
         const filePath = join(uploadDir, safeName);
 
         await writeFile(filePath, buffer);
 
-        // Store the public URL path
         const url = normalizePublicAssetPath(
           `/uploads/call-sheets/${parsedId}/${safeName}`,
         );
@@ -142,10 +145,17 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    const parsedId = parseInt(id);
+    const parsedId = parseInt(id, 10);
     if (isNaN(parsedId)) {
       return new Response(JSON.stringify({ error: "Invalid ID" }), {
         status: 400,
+      });
+    }
+
+    const sheet = await getCallSheetIfAccessible(auth.session, parsedId);
+    if (!sheet) {
+      return new Response(JSON.stringify({ error: "Call sheet not found" }), {
+        status: 404,
       });
     }
 
@@ -153,6 +163,15 @@ export async function DELETE(
     if (!pictureId) {
       return new Response(JSON.stringify({ error: "pictureId required" }), {
         status: 400,
+      });
+    }
+
+    const picture = await prisma.callSheetPicture.findFirst({
+      where: { id: pictureId, callSheetId: parsedId },
+    });
+    if (!picture) {
+      return new Response(JSON.stringify({ error: "Picture not found" }), {
+        status: 404,
       });
     }
 

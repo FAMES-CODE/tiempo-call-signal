@@ -329,7 +329,18 @@
           "createFirebirdNote": "إنشاء ملاحظة Firebird",
           "resolving": "جاري الحل…",
           "markResolved": "وضع علامة محلول",
-          "viewCustomersDirectory": "عرض دليل العملاء"
+          "viewCustomersDirectory": "عرض دليل العملاء",
+          "editAria": "تعديل بطاقة الاتصال",
+          "deleteAria": "حذف بطاقة الاتصال",
+          "deleteTitle": "حذف هذه البطاقة؟",
+          "deleteDescription": "سيتم إخفاء بطاقة الاتصال رقم {{id}} (محلي SQLite فقط، بدون تأثير على Firebird).",
+          "deleteCancel": "إلغاء",
+          "deleteConfirm": "حذف",
+          "editCancel": "إلغاء",
+          "saveChanges": "حفظ",
+          "saving": "جاري الحفظ…",
+          "editFailed": "فشل التعديل",
+          "editNetwork": "فشل التعديل — خطأ في الشبكة"
         }
       },
       "admin": {

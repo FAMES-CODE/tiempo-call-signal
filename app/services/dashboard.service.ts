@@ -1,4 +1,5 @@
 import prisma from "@/app/db";
+import { callSheetNotDeleted } from "@/lib/call-sheet/access";
 
 type DashboardStats = {
   totalCalls: number;
@@ -17,7 +18,7 @@ export async function getDashboardStats(userId: number): Promise<DashboardStats>
     return cached.data;
   }
 
-  const userCasesWhere = { createdById: userId };
+  const userCasesWhere = { createdById: userId, ...callSheetNotDeleted };
 
   const [totalCalls, totalResolved, totalPending] = await Promise.all([
     prisma.callSheet.count({ where: userCasesWhere }),

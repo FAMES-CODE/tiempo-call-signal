@@ -1,5 +1,6 @@
 import prisma from "@/app/db";
 import { requireAdmin } from "@/lib/auth/api-auth";
+import { callSheetNotDeleted } from "@/lib/call-sheet/access";
 import { NextResponse } from "next/server";
 
 type Params = {
@@ -39,7 +40,7 @@ export async function GET(_request: Request, { params }: Params) {
     }
 
     const sheets = await prisma.callSheet.findMany({
-      where: { createdById: userId },
+      where: { createdById: userId, ...callSheetNotDeleted },
       select: {
         id: true,
         status: true,
@@ -56,6 +57,7 @@ export async function GET(_request: Request, { params }: Params) {
 
     const resolvedByThisUser = await prisma.callSheet.count({
       where: {
+        ...callSheetNotDeleted,
         status: "resolved",
         resolvedById: userId,
       },

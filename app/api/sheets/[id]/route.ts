@@ -1,5 +1,6 @@
 import prisma from "@/app/db";
 import { requireSession } from "@/lib/auth/api-auth";
+import { getCallSheetIfAccessible } from "@/lib/call-sheet/access";
 import { NextResponse } from "next/server";
 import type { Prisma } from "@/prisma/generated/client";
 
@@ -11,9 +12,9 @@ const ALLOWED_PATCH_FIELDS = [
   "callSim",
   "callNumber",
   "observation",
+  "customerId",
   "resolvedAt",
   "resolvedById",
-  "isSynced",
 ] as const;
 
 type AllowedPatchField = (typeof ALLOWED_PATCH_FIELDS)[number];
@@ -35,14 +36,15 @@ function pickPatchData(
       continue;
     }
 
-    if (key === "resolvedById" || key === "rate") {
-      (data as Record<string, unknown>)[key] =
-        value === null || value === undefined ? null : Number(value);
-      continue;
-    }
-
-    if (key === "isSynced") {
-      data.isSynced = Boolean(value);
+    if (key === "resolvedById" || key === "rate" || key === "customerId") {
+      if (key === "customerId") {
+        const customerId = Number(value);
+        if (!Number.isFinite(customerId) || customerId <= 0) continue;
+        data.customer = { connect: { id: customerId } };
+      } else {
+        (data as Record<string, unknown>)[key] =
+          value === null || value === undefined ? null : Number(value);
+      }
       continue;
     }
 
@@ -61,12 +63,20 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    const parsedId = parseInt(id);
+    const parsedId = parseInt(id, 10);
     if (isNaN(parsedId)) {
       return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
     }
 
-    const sheet = await prisma.callSheet.delete({ where: { id: parsedId } });
+    const existing = await getCallSheetIfAccessible(auth.session, parsedId);
+    if (!existing) {
+      return NextResponse.json({ error: "Call sheet not found" }, { status: 404 });
+    }
+
+    const sheet = await prisma.callSheet.update({
+      where: { id: parsedId },
+      data: { isDelete: true },
+    });
     return NextResponse.json(sheet);
   } catch (error) {
     console.error(error);
@@ -83,9 +93,14 @@ export async function PATCH(
 
   try {
     const { id } = await params;
-    const parsedId = parseInt(id);
+    const parsedId = parseInt(id, 10);
     if (isNaN(parsedId)) {
       return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
+
+    const existing = await getCallSheetIfAccessible(auth.session, parsedId);
+    if (!existing) {
+      return NextResponse.json({ error: "Call sheet not found" }, { status: 404 });
     }
 
     const body = (await request.json()) as Record<string, unknown>;
@@ -95,9 +110,24 @@ export async function PATCH(
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
     }
 
+    if (data.customer && "connect" in data.customer) {
+      const customerId = (data.customer.connect as { id: number }).id;
+      const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { id: true },
+      });
+      if (!customer) {
+        return NextResponse.json({ error: "Customer not found" }, { status: 400 });
+      }
+    }
+
     const sheet = await prisma.callSheet.update({
       where: { id: parsedId },
       data,
+      include: {
+        customer: true,
+        user: { select: { username: true, id: true } },
+      },
     });
 
     return NextResponse.json(sheet);

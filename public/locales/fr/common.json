@@ -259,7 +259,7 @@
         "loading": "Chargement…",
         "pageEyebrow": "Fiches d'appel",
         "pageTitle": "Appels",
-        "pageDescription": "Consultez les appels support, filtrez par statut et ouvrez une ligne pour les détails. Vous pouvez marquer vos appels en attente comme résolus.",
+        "pageDescription": "Consultez les fiches d'appel, modifiez ou supprimez les vôtres (les administrateurs gèrent toutes les fiches). La suppression est locale uniquement.",
         "refresh": "Actualiser",
         "backOverview": "Retour à l'aperçu",
         "statTotal": "Total appels",
@@ -329,7 +329,18 @@
           "createFirebirdNote": "Créer une note Firebird",
           "resolving": "Résolution…",
           "markResolved": "Marquer comme résolu",
-          "viewCustomersDirectory": "Voir l'annuaire clients"
+          "viewCustomersDirectory": "Voir l'annuaire clients",
+          "editAria": "Modifier la fiche",
+          "deleteAria": "Supprimer la fiche",
+          "deleteTitle": "Supprimer cette fiche ?",
+          "deleteDescription": "La fiche d'appel n°{{id}} sera masquée (suppression locale uniquement, sans impact Firebird).",
+          "deleteCancel": "Annuler",
+          "deleteConfirm": "Supprimer",
+          "editCancel": "Annuler",
+          "saveChanges": "Enregistrer",
+          "saving": "Enregistrement…",
+          "editFailed": "Échec de la modification",
+          "editNetwork": "Échec de la modification — erreur réseau"
         }
       },
       "admin": {

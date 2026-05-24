@@ -36,8 +36,8 @@
       "changePasswordConfirmRequired": "التأكيد مطلوب"
     },
     "register": {
-      "title": "إنشاء حسابك",
-      "subtitle": "أدخل اسم المستخدم أدناه لإنشاء حسابك",
+      "title": "إنشاء حساب",
+      "subtitle": "أدخل اسم المستخدم أدناه لإنشاء حساب",
       "usernameLabel": "اسم المستخدم",
       "usernamePlaceholder": "محمد أحمد",
       "passwordLabel": "كلمة المرور",
@@ -371,7 +371,8 @@
         "tempPasswordPlaceholder": "كلمة مرور مؤقتة (اختياري)",
         "resetPassword": "إعادة التعيين",
         "resetting": "جاري إعادة التعيين…",
-        "passwordResetFailed": "فشلت إعادة التعيين"
+        "passwordResetFailed": "فشلت إعادة التعيين",
+        "createUser": "إنشاء مستخدم"
       },
       "adminUser": {
         "backToAdmin": "العودة إلى الإدارة",

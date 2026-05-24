@@ -36,8 +36,8 @@
       "changePasswordConfirmRequired": "Confirmation is required"
     },
     "register": {
-      "title": "Create your account",
-      "subtitle": "Enter your username below to create your account",
+      "title": "Create account",
+      "subtitle": "Enter username below to create an account",
       "usernameLabel": "Username",
       "usernamePlaceholder": "John Doe",
       "passwordLabel": "Password",
@@ -371,7 +371,8 @@
         "tempPasswordPlaceholder": "Temporary password (optional)",
         "resetPassword": "Reset password",
         "resetting": "Resetting…",
-        "passwordResetFailed": "Password reset failed"
+        "passwordResetFailed": "Password reset failed",
+        "createUser": "Create user"
       },
       "adminUser": {
         "backToAdmin": "Return to admin",

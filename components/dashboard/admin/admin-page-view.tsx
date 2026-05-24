@@ -30,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useLocalePrefix, withLocalePath } from "@/lib/locale-path";
+import { useRouter } from "next/navigation";
 
 type AdminUser = { id: number; username: string; role: string };
 
@@ -52,7 +53,7 @@ export default function AdminPageView() {
   const { t } = useTranslation("common");
   const prefix = useLocalePrefix();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
-
+  const router = useRouter();
   const fetcher = React.useCallback(
     async (url: string) => {
       const res = await fetch(url);
@@ -169,6 +170,14 @@ export default function AdminPageView() {
             ) : (
               t("common.dashboard.admin.syncCustomers")
             )}
+          </Button>
+          <Button 
+            type="button"
+            onClick={() => {
+              router.push(withLocalePath(prefix, "/register"));
+            }}
+          >
+            {t("common.dashboard.admin.createUser")}
           </Button>
         </div>
       </section>

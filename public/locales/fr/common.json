@@ -36,8 +36,8 @@
       "changePasswordConfirmRequired": "La confirmation est obligatoire"
     },
     "register": {
-      "title": "Créer votre compte",
-      "subtitle": "Entrez votre nom d'utilisateur ci-dessous pour créer votre compte",
+      "title": "Créer un compte",
+      "subtitle": "Entrez le nom d'utilisateur ci-dessous pour créer un compte",
       "usernameLabel": "Nom d'utilisateur",
       "usernamePlaceholder": "Jean Dupont",
       "passwordLabel": "Mot de passe",
@@ -371,7 +371,8 @@
         "tempPasswordPlaceholder": "Mot de passe temporaire (optionnel)",
         "resetPassword": "Réinitialiser",
         "resetting": "Réinitialisation…",
-        "passwordResetFailed": "Échec de la réinitialisation"
+        "passwordResetFailed": "Échec de la réinitialisation",
+        "createUser": "Créer un utilisateur"
       },
       "adminUser": {
         "backToAdmin": "Retour à l'administration",
